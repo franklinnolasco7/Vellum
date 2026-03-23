@@ -13,6 +13,12 @@ use zip::ZipArchive;
 pub struct BookMeta {
     pub title: String,
     pub author: String,
+    pub genre: Option<String>,
+    pub description: Option<String>,
+    pub publisher: Option<String>,
+    pub language: Option<String>,
+    pub published_at: Option<String>,
+    pub file_size: Option<u64>,
     pub cover_data: Option<Vec<u8>>,
     pub chapter_count: usize,
 }
@@ -42,10 +48,45 @@ pub struct SearchResult {
 pub fn parse_meta(path: &Path) -> Result<BookMeta> {
     let mut doc = open(path)?;
     let title = doc.mdata("title").map(|m| m.value.clone()).unwrap_or_else(|| stem(path));
-    let author = doc.mdata("creator").map(|m| m.value.clone()).unwrap_or_else(|| "Unknown Author".to_string());
+    let author = doc
+        .mdata("creator")
+        .map(|m| m.value.clone())
+        .unwrap_or_else(|| "Unknown Author".to_string());
+    let genre = first_meta_value(&mut doc, &["subject", "genre"]);
+    let description = first_meta_value(&mut doc, &["description", "abstract"]);
+    let publisher = first_meta_value(&mut doc, &["publisher"]);
+    let language = first_meta_value(&mut doc, &["language"]);
+    let published_at = first_meta_value(&mut doc, &["date", "published", "issued"]);
+    let file_size = fs::metadata(path).ok().map(|m| m.len());
     let chapter_count = doc.get_num_chapters();
     let cover_data = doc.get_cover().map(|(data, _mime)| data);
-    Ok(BookMeta { title, author, cover_data, chapter_count })
+    Ok(BookMeta {
+        title,
+        author,
+        genre,
+        description,
+        publisher,
+        language,
+        published_at,
+        file_size,
+        cover_data,
+        chapter_count,
+    })
+}
+
+fn first_meta_value(
+    doc: &mut epub::doc::EpubDoc<std::io::BufReader<std::fs::File>>,
+    keys: &[&str],
+) -> Option<String> {
+    for key in keys {
+        if let Some(meta) = doc.mdata(key) {
+            let value = meta.value.trim();
+            if !value.is_empty() {
+                return Some(value.to_string());
+            }
+        }
+    }
+    None
 }
 
 pub fn parse_toc(path: &Path) -> Result<Vec<TocEntry>> {
