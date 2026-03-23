@@ -95,6 +95,7 @@ pub fn run() {
             commands::get_toc,
             commands::save_progress,
             commands::get_progress,
+            commands::add_reading_time,
             commands::add_annotation,
             commands::get_annotations,
             commands::delete_annotation,
