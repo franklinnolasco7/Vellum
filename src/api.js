@@ -59,6 +59,7 @@ export const saveProgress = (bookId, chapterIdx, scrollPct) =>
   call("save_progress", { bookId, chapterIdx, scrollPct });
 
 export const getProgress = (bookId) => call("get_progress", { bookId });
+export const addReadingTime = (bookId, seconds) => call("add_reading_time", { bookId, seconds });
 
 // --- Annotations ---
 
@@ -102,6 +103,9 @@ export const windowClose    = () => call("window_close");
 
 /**
  * @typedef {{ id:string, title:string, author:string, file_path:string,
+ *             genre?:string|null, description?:string|null, publisher?:string|null,
+ *             language?:string|null, published_at?:string|null, file_size?:number|null,
+ *             reading_seconds?:number,
  *             cover_b64:string|null, added_at:string, last_opened:string|null,
  *             progress_chapter:number, progress_pct:number }} Book
  *
