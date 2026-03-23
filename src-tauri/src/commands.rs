@@ -29,6 +29,12 @@ pub async fn import_epub(
         &pool,
         &meta.title,
         &meta.author,
+        meta.genre.as_deref(),
+        meta.description.as_deref(),
+        meta.publisher.as_deref(),
+        meta.language.as_deref(),
+        meta.published_at.as_deref(),
+        meta.file_size,
         &path,
         meta.chapter_count,
         meta.cover_data,
@@ -44,6 +50,7 @@ pub async fn import_epub(
 #[tauri::command]
 pub async fn get_library(pool: State<'_, DbPool>) -> Result<Vec<library::Book>> {
     library::backfill_chapter_counts(&pool).ok();
+    library::backfill_book_metadata(&pool).ok();
     library::all_books(&pool)
 }
 
@@ -95,6 +102,15 @@ pub async fn get_progress(
     book_id: String,
 ) -> Result<Option<library::Progress>> {
     library::get_progress(&pool, &book_id)
+}
+
+#[tauri::command]
+pub async fn add_reading_time(
+    pool: State<'_, DbPool>,
+    book_id: String,
+    seconds: u64,
+) -> Result<()> {
+    library::add_reading_time(&pool, &book_id, seconds)
 }
 
 // ── Annotations ───────────────────────────────────────────────────────────────
