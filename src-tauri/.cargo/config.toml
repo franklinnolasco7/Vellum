@@ -1,0 +1,7 @@
+[target.x86_64-unknown-linux-gnu]
+linker = "gcc"
+rustflags = ["-C", "link-arg=-fuse-ld=bfd"]
+
+[env]
+GDK_BACKEND = "x11"
+WEBKIT_DISABLE_COMPOSITING_MODE = "1"

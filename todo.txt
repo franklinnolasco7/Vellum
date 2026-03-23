@@ -1,0 +1,3 @@
+- built in dictionary fetch from wikipedia.
+- fix linking reference
+- fix next scrolls buttons
