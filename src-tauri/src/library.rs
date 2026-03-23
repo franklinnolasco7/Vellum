@@ -13,10 +13,17 @@ pub struct Book {
     pub id: String,
     pub title: String,
     pub author: String,
+    pub genre: Option<String>,
+    pub description: Option<String>,
+    pub publisher: Option<String>,
+    pub language: Option<String>,
+    pub published_at: Option<String>,
+    pub file_size: Option<u64>,
     pub file_path: String,
     pub chapter_count: usize,
     /// `data:image/jpeg;base64,…` or None
     pub cover_b64: Option<String>,
+    pub reading_seconds: u64,
     pub added_at: String,
     pub last_opened: Option<String>,
     pub progress_chapter: usize,
@@ -47,6 +54,12 @@ pub fn add_book(
     pool: &DbPool,
     title: &str,
     author: &str,
+    genre: Option<&str>,
+    description: Option<&str>,
+    publisher: Option<&str>,
+    language: Option<&str>,
+    published_at: Option<&str>,
+    file_size: Option<u64>,
     file_path: &str,
     chapter_count: usize,
     cover_data: Option<Vec<u8>>,
@@ -55,14 +68,37 @@ pub fn add_book(
     let id = Uuid::new_v4().to_string();
     let now = Utc::now().to_rfc3339();
     conn.execute(
-                "INSERT INTO books (id, title, author, file_path, chapter_count, cover_data, added_at)
-                 VALUES (?1,?2,?3,?4,?5,?6,?7)
+        "INSERT INTO books (
+            id, title, author, genre, description, publisher, language,
+            published_at, file_size, file_path, chapter_count, cover_data, added_at
+         )
+         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13)
          ON CONFLICT(file_path) DO UPDATE SET
            title=excluded.title,
            author=excluded.author,
-                     chapter_count=excluded.chapter_count,
+           genre=excluded.genre,
+           description=excluded.description,
+           publisher=excluded.publisher,
+           language=excluded.language,
+           published_at=excluded.published_at,
+           file_size=excluded.file_size,
+           chapter_count=excluded.chapter_count,
            cover_data=excluded.cover_data",
-                params![id, title, author, file_path, chapter_count as i64, cover_data, now],
+        params![
+            id,
+            title,
+            author,
+            genre,
+            description,
+            publisher,
+            language,
+            published_at,
+            file_size.map(|v| v as i64),
+            file_path,
+            chapter_count as i64,
+            cover_data,
+            now
+        ],
     )?;
     // Return the actual id (may differ on conflict update)
     let actual_id: String = conn.query_row(
@@ -76,9 +112,10 @@ pub fn add_book(
 pub fn all_books(pool: &DbPool) -> Result<Vec<Book>> {
     let conn = pool.get().map_err(|e| Error::Db(e.to_string()))?;
     let mut stmt = conn.prepare(
-        "SELECT b.id, b.title, b.author, b.file_path, b.cover_data,
-                b.chapter_count,
-                b.added_at, b.last_opened,
+        "SELECT b.id, b.title, b.author, b.genre, b.description,
+                b.publisher, b.language, b.published_at, b.file_size,
+                b.file_path, b.cover_data, b.chapter_count,
+                b.reading_seconds, b.added_at, b.last_opened,
                 COALESCE(p.chapter_idx, 0),
                 COALESCE(
                     CASE
@@ -94,7 +131,7 @@ pub fn all_books(pool: &DbPool) -> Result<Vec<Book>> {
     )?;
 
     let rows = stmt.query_map([], |r| {
-        let raw: Option<Vec<u8>> = r.get(4)?;
+        let raw: Option<Vec<u8>> = r.get(10)?;
         let cover_b64 = raw.map(|d: Vec<u8>| {
             let mime = detect_mime(&d);
             let mut s = format!("data:{};base64,", mime);
@@ -105,13 +142,20 @@ pub fn all_books(pool: &DbPool) -> Result<Vec<Book>> {
             id:               r.get(0)?,
             title:            r.get(1)?,
             author:           r.get(2)?,
-            file_path:        r.get(3)?,
-            chapter_count:    r.get::<_, i64>(5)? as usize,
+            genre:            r.get(3)?,
+            description:      r.get(4)?,
+            publisher:        r.get(5)?,
+            language:         r.get(6)?,
+            published_at:     r.get(7)?,
+            file_size:        r.get::<_, Option<i64>>(8)?.map(|v| v as u64),
+            file_path:        r.get(9)?,
+            chapter_count:    r.get::<_, i64>(11)? as usize,
             cover_b64,
-            added_at:         r.get(6)?,
-            last_opened:      r.get(7)?,
-            progress_chapter: r.get::<_, i64>(8)? as usize,
-            progress_pct:     r.get(9)?,
+            reading_seconds:  r.get::<_, i64>(12)? as u64,
+            added_at:         r.get(13)?,
+            last_opened:      r.get(14)?,
+            progress_chapter: r.get::<_, i64>(15)? as usize,
+            progress_pct:     r.get(16)?,
         })
     })?;
 
@@ -149,6 +193,64 @@ pub fn backfill_chapter_counts(pool: &DbPool) -> Result<()> {
                 params![meta.chapter_count as i64, id],
             );
         }
+    }
+
+    Ok(())
+}
+
+pub fn backfill_book_metadata(pool: &DbPool) -> Result<()> {
+    let conn = pool.get().map_err(|e| Error::Db(e.to_string()))?;
+
+    let mut stmt = conn.prepare(
+        "SELECT id, file_path
+         FROM books
+         WHERE genre IS NULL
+            OR description IS NULL
+            OR publisher IS NULL
+            OR language IS NULL
+            OR published_at IS NULL
+            OR file_size IS NULL",
+    )?;
+
+    let rows = stmt.query_map([], |r| {
+        Ok((
+            r.get::<_, String>(0)?,
+            r.get::<_, String>(1)?,
+        ))
+    })?;
+
+    let items = rows.collect::<rusqlite::Result<Vec<_>>>()?;
+    drop(stmt);
+
+    for (id, file_path) in items {
+        let path = std::path::Path::new(&file_path);
+        if !path.exists() {
+            continue;
+        }
+
+        let Ok(meta) = epub::parse_meta(path) else {
+            continue;
+        };
+
+        let _ = conn.execute(
+            "UPDATE books
+             SET genre = COALESCE(genre, ?1),
+                 description = COALESCE(description, ?2),
+                 publisher = COALESCE(publisher, ?3),
+                 language = COALESCE(language, ?4),
+                 published_at = COALESCE(published_at, ?5),
+                 file_size = COALESCE(file_size, ?6)
+             WHERE id = ?7",
+            params![
+                meta.genre,
+                meta.description,
+                meta.publisher,
+                meta.language,
+                meta.published_at,
+                meta.file_size.map(|v| v as i64),
+                id,
+            ],
+        );
     }
 
     Ok(())
@@ -197,6 +299,24 @@ pub fn get_progress(pool: &DbPool, book_id: &str) -> Result<Option<Progress>> {
         chapter_idx: r.get::<_, i64>(0).unwrap_or(0) as usize,
         scroll_pct:  r.get(1).unwrap_or(0.0),
     }))
+}
+
+pub fn add_reading_time(pool: &DbPool, book_id: &str, seconds: u64) -> Result<()> {
+    if seconds == 0 {
+        return Ok(());
+    }
+    let conn = pool.get().map_err(|e| Error::Db(e.to_string()))?;
+    let updated = conn.execute(
+        "UPDATE books
+         SET reading_seconds = COALESCE(reading_seconds, 0) + ?1,
+             last_opened = ?2
+         WHERE id = ?3",
+        params![seconds as i64, Utc::now().to_rfc3339(), book_id],
+    )?;
+    if updated == 0 {
+        return Err(Error::NotFound(format!("book {book_id}")));
+    }
+    Ok(())
 }
 
 // ── Annotations ───────────────────────────────────────────────────────────────
@@ -332,6 +452,12 @@ mod tests {
             &pool,
             "Test Title",
             "Test Author",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
             file_path,
             12,
             None,
@@ -356,6 +482,12 @@ mod tests {
             &pool,
             "Progress Book",
             "Author",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
             file_path,
             10,
             None,
