@@ -1,5 +1,0 @@
-- built in dictionary fetch from wikipedia.
-- fix linking reference
-- fix next scrolls buttons
-- custom categories
-- multiple ebook format support
