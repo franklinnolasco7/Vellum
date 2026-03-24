@@ -1,15 +1,3 @@
-# Vellum
-
-A minimal desktop EPUB reader built with Tauri 2, Rust, and vanilla JavaScript.
-
-## Features
-
-- Local library with SQLite
-- Reading progress + resume
-- In-book search
-- Annotations
-- Linux/Wayland-first desktop build
-
 ## Requirements
 
 - Node.js 18+
