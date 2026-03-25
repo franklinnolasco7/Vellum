@@ -1,9 +1,9 @@
 - built in dictionary fetch from wikipedia.
-- fix linking reference
+- fix hyperlink reference
 - fix next scrolls buttons
 - custom categories
 - multiple ebook format support
-- library search
 - different reading layout like 2 column 3 column, original epub layout, etc.
 - focus mode
-- custom mouse cursor maybe just a dot pointer.
+- hide mouse on focus
+- estimate time left reading the book

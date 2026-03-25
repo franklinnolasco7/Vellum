@@ -1,3 +1,3 @@
-- new icons
-- B&W theme including images
-- UI enhancements
+- library search
+- ability to slide progress bar with mouse drag and scroll
+- UI/UX improvements
