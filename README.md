@@ -85,6 +85,10 @@ Vellum stores your library database at:
 
 ---
 
+⚠️ Vellum is in early development. Expect bugs and breaking changes.
+
+---
+
 ## License
 
 MIT — see [LICENSE](LICENSE) for details.
