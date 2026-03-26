@@ -1,3 +1,0 @@
-- library search
-- ability to slide progress bar with mouse drag and scroll
-- UI/UX improvements

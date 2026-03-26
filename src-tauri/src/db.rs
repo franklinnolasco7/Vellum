@@ -79,6 +79,16 @@ pub fn migrate(pool: &DbPool) -> Result<()> {
         (4, "
             ALTER TABLE books ADD COLUMN reading_seconds INTEGER NOT NULL DEFAULT 0;
         "),
+        (5, "
+            ALTER TABLE annotations ADD COLUMN quote_html TEXT;
+        "),
+        (6, "
+            ALTER TABLE annotations ADD COLUMN ann_order INTEGER NOT NULL DEFAULT 0;
+            UPDATE annotations
+            SET ann_order = COALESCE(CAST(strftime('%s', created_at) AS INTEGER), 0)
+            WHERE ann_order = 0;
+            CREATE INDEX IF NOT EXISTS idx_ann_order ON annotations(book_id, ann_order);
+        "),
     ];
 
     let now = chrono::Utc::now().to_rfc3339();

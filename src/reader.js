@@ -48,6 +48,15 @@ let _progressTooltipLastPlacement = "";
 let _progressTooltipWidth = 0;
 let _progressTooltipHeight = 0;
 let _chapterTooltipTitles = [];
+let _imageViewerBackdrop = null;
+let _imageViewerPanel = null;
+let _imageViewerImg = null;
+let _imageViewerCaption = null;
+let _imageViewerCloseTimer = null;
+let _imageViewerMenu = null;
+let _imageViewerMenuOpen = false;
+let _imageViewerMenuSrc = "";
+let _imageViewerMenuAlt = "";
 
 const AUTO_PAGE_THRESHOLD_PX = 56;
 const AUTO_PAGE_COOLDOWN_MS = 420;
@@ -88,6 +97,7 @@ export function init() {
 
   // Debounce writes so frequent scroll events do not flood persistence.
   const readingArea = document.getElementById("reading-area");
+  readingArea.addEventListener("click", onReadingAreaClick, true);
   readingArea.addEventListener("scroll", () => {
     const now = Date.now();
     const autoPageSuspended = now < _suspendAutoPageUntil;
@@ -121,6 +131,7 @@ export function init() {
   }, { passive: true });
 
   initSelectionTooltip();
+  initImageViewer();
 
   ann.init({ onJump: loadChapter });
 
@@ -135,6 +146,18 @@ export function init() {
     }
     if (_readerActive && book) startReadingTimer();
   });
+}
+
+function onReadingAreaClick(event) {
+  if (!(event.target instanceof Element)) return;
+  const img = event.target.closest("img");
+  if (!img || !img.closest(".chapter-body")) return;
+  if (_imageViewerBackdrop?.classList.contains("open")) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  openImageViewer(img);
 }
 
 function onProgressPointerDown(event) {
@@ -484,6 +507,7 @@ export async function loadChapter(idx, opts = {}) {
   const restoreScrollPct = clamp(opts.restoreScrollPct ?? 0, 0, 1);
   const restoreLocator = opts.restoreLocator || null;
   const highlightQuery = (opts.highlightQuery ?? "").trim();
+  const highlightQuote = (opts.highlightQuote ?? "").trim();
   const anchorTarget = normalizeAnchorTarget(opts.anchorTarget ?? "");
 
   document.getElementById("chapter-content").innerHTML =
@@ -491,7 +515,7 @@ export async function loadChapter(idx, opts = {}) {
 
   try {
     const ch = await api.getChapter(book.file_path, idx);
-    renderChapter(ch, scrollTarget, restoreScrollPct, restoreLocator, highlightQuery, anchorTarget);
+    renderChapter(ch, scrollTarget, restoreScrollPct, restoreLocator, highlightQuery, highlightQuote, anchorTarget);
   } catch (err) {
     document.getElementById("chapter-content").innerHTML = `
       <div class="empty-state">
@@ -501,7 +525,15 @@ export async function loadChapter(idx, opts = {}) {
   }
 }
 
-function renderChapter(ch, scrollTarget = "top", restoreScrollPct = 0, restoreLocator = null, highlightQuery = "", anchorTarget = "") {
+function renderChapter(
+  ch,
+  scrollTarget = "top",
+  restoreScrollPct = 0,
+  restoreLocator = null,
+  highlightQuery = "",
+  highlightQuote = "",
+  anchorTarget = ""
+) {
   const pct = chapterProgressPct(ch.index);
 
   clearProgressHoverFrame();
@@ -611,9 +643,12 @@ function renderChapter(ch, scrollTarget = "top", restoreScrollPct = 0, restoreLo
     _saveTimer = setTimeout(persistProgress, saveDelay);
   }
 
-  if (highlightQuery) {
+  if (highlightQuote || highlightQuery) {
     requestAnimationFrame(() => {
-      if (flashSearchHit(highlightQuery)) {
+      const flashed =
+        (highlightQuote && flashAnnotationHit(highlightQuote))
+        || (highlightQuery && flashSearchHit(highlightQuery));
+      if (flashed) {
         clearTimeout(_saveTimer);
         _saveTimer = setTimeout(persistProgress, PROGRESS_SAVE_DEBOUNCE_MS);
       }
@@ -776,6 +811,83 @@ function showExternalLinkConfirm(href) {
   });
 }
 
+function showAddNoteDialog() {
+  return new Promise((resolve) => {
+    const existing = document.getElementById("add-note-dialog");
+    if (existing) existing.remove();
+
+    const overlay = document.createElement("div");
+    overlay.id = "add-note-dialog";
+    overlay.className = "add-note-dialog-backdrop";
+    overlay.innerHTML = `
+      <div class="add-note-dialog" role="dialog" aria-modal="true" aria-labelledby="add-note-dialog-title">
+        <div class="add-note-dialog-title" id="add-note-dialog-title">Add a note</div>
+        <textarea class="add-note-dialog-input" data-role="note-input" rows="4" maxlength="2000" placeholder="Write a note..."></textarea>
+        <div class="add-note-dialog-actions">
+          <button class="nav-btn" type="button" data-action="cancel">Cancel</button>
+          <button class="nav-btn" type="button" data-action="save">Save</button>
+        </div>
+      </div>`;
+
+    const input = overlay.querySelector('[data-role="note-input"]');
+    const saveBtn = overlay.querySelector('[data-action="save"]');
+    const cancelBtn = overlay.querySelector('[data-action="cancel"]');
+
+    const autoSizeInput = () => {
+      if (!input) return;
+      input.style.height = "auto";
+      const maxPx = Math.floor(window.innerHeight * 0.45);
+      input.style.height = `${Math.min(input.scrollHeight, maxPx)}px`;
+    };
+
+    const close = (result) => {
+      document.removeEventListener("keydown", onKeyDown, true);
+      overlay.classList.remove("open");
+      setTimeout(() => {
+        overlay.remove();
+        resolve(result);
+      }, 120);
+    };
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        close(null);
+      }
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        const value = String(input?.value ?? "").trim();
+        close(value || null);
+      }
+    };
+
+    saveBtn?.addEventListener("click", () => {
+      const value = String(input?.value ?? "").trim();
+      close(value || null);
+    });
+
+    cancelBtn?.addEventListener("click", () => {
+      close(null);
+    });
+
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) {
+        close(null);
+      }
+    });
+
+    input?.addEventListener("input", autoSizeInput);
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add("open"));
+    document.addEventListener("keydown", onKeyDown, true);
+
+    saveBtn?.focus();
+    input?.focus();
+    autoSizeInput();
+  });
+}
+
 function queueAnchorScroll(anchor) {
   const normalized = normalizeAnchorTarget(anchor);
   if (!normalized) return;
@@ -833,6 +945,37 @@ function scheduleProgressSave() {
   _saveTimer = setTimeout(persistProgress, PROGRESS_SAVE_DEBOUNCE_MS);
 }
 
+function flashAnnotationHit(quote) {
+  const body = document.querySelector(".chapter-body");
+  if (!body) return false;
+
+  clearTimeout(_searchHighlightTimer);
+  clearExistingSearchHighlight();
+
+  const normalizedQuote = normalizeAnnotationString(quote);
+  if (!normalizedQuote || normalizedQuote.length < 4) return false;
+
+  const { normalizedText, map, nodeIndex, textNodes } = buildNormalizedTextMap(body, { stripPunct: true });
+  if (!normalizedText || normalizedText.length < normalizedQuote.length) return false;
+
+  const matchIdx = normalizedText.indexOf(normalizedQuote);
+  if (matchIdx < 0) return false;
+
+  const startInfo = map[matchIdx];
+  const endInfo = map[matchIdx + normalizedQuote.length - 1];
+  if (!startInfo || !endInfo) return false;
+
+  const endOffset = endInfo.offset + 1;
+  const spans = highlightTextRange(textNodes, nodeIndex, startInfo.node, startInfo.offset, endInfo.node, endOffset);
+  if (!spans.length) return false;
+
+  spans.forEach((span) => {
+    span.addEventListener("animationend", () => unwrapHighlight(span), { once: true });
+  });
+  spans[0].scrollIntoView({ behavior: "smooth", block: "center" });
+  return true;
+}
+
 function flashSearchHit(query) {
   const body = document.querySelector(".chapter-body");
   if (!body) return false;
@@ -875,6 +1018,134 @@ function flashSearchHit(query) {
   }
 
   return false;
+}
+
+function buildNormalizedTextMap(root, { stripPunct = false } = {}) {
+  const textNodes = [];
+  const walker = document.createTreeWalker(
+    root,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode(node) {
+        const txt = node.nodeValue || "";
+        const parentTag = node.parentElement?.tagName;
+        if (parentTag === "SCRIPT" || parentTag === "STYLE") return NodeFilter.FILTER_REJECT;
+        return txt.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      },
+    }
+  );
+
+  let node;
+  while ((node = walker.nextNode())) {
+    textNodes.push(node);
+  }
+
+  const nodeIndex = new Map();
+  textNodes.forEach((n, idx) => nodeIndex.set(n, idx));
+
+  let normalizedText = "";
+  const map = [];
+  let prevSpace = false;
+
+  for (const textNode of textNodes) {
+    const text = textNode.nodeValue || "";
+    for (let i = 0; i < text.length; i++) {
+      let ch = normalizeMatchChar(text[i], { stripPunct });
+      if (ch === "") continue;
+
+      if (ch === " ") {
+        if (!normalizedText.length || prevSpace) {
+          prevSpace = true;
+          continue;
+        }
+        prevSpace = true;
+      } else {
+        prevSpace = false;
+      }
+
+      normalizedText += ch;
+      map.push({ node: textNode, offset: i });
+    }
+  }
+
+  while (normalizedText.endsWith(" ")) {
+    normalizedText = normalizedText.slice(0, -1);
+    map.pop();
+  }
+
+  return { normalizedText, map, nodeIndex, textNodes };
+}
+
+function normalizeSearchString(text) {
+  return normalizeTextForMatch(text, { stripPunct: false });
+}
+
+function normalizeAnnotationString(text) {
+  return normalizeTextForMatch(text, { stripPunct: true });
+}
+
+function normalizeTextForMatch(text, { stripPunct = false } = {}) {
+  const raw = String(text || "");
+  let normalized = "";
+  let prevSpace = false;
+
+  for (let i = 0; i < raw.length; i++) {
+    let ch = normalizeMatchChar(raw[i], { stripPunct });
+    if (ch === "") continue;
+
+    if (ch === " ") {
+      if (!normalized.length || prevSpace) {
+        prevSpace = true;
+        continue;
+      }
+      prevSpace = true;
+    } else {
+      prevSpace = false;
+    }
+
+    normalized += ch;
+  }
+
+  return normalized.trim();
+}
+
+function normalizeMatchChar(ch, { stripPunct = false } = {}) {
+  let out = ch;
+  if (out === "\u00A0") out = " ";
+  if (out === "\u00AD" || out === "\u200B" || out === "\uFEFF") return "";
+  if (out === "\u201C" || out === "\u201D") out = '"';
+  if (out === "\u2018" || out === "\u2019") out = "'";
+  if (out === "\u2013" || out === "\u2014" || out === "\u2212") out = "-";
+  if (/\s/.test(out)) out = " ";
+  if (stripPunct && /[\p{P}\p{S}]/u.test(out)) out = " ";
+  return out;
+}
+
+function highlightTextRange(textNodes, nodeIndex, startNode, startOffset, endNode, endOffset) {
+  const startIdx = nodeIndex.get(startNode);
+  const endIdx = nodeIndex.get(endNode);
+  if (!Number.isInteger(startIdx) || !Number.isInteger(endIdx)) return [];
+
+  const from = Math.min(startIdx, endIdx);
+  const to = Math.max(startIdx, endIdx);
+  const spans = [];
+
+  for (let i = from; i <= to; i++) {
+    const node = textNodes[i];
+    if (!node?.nodeValue) continue;
+
+    let nodeStart = 0;
+    let nodeEnd = node.nodeValue.length;
+
+    if (node === startNode) nodeStart = startOffset;
+    if (node === endNode) nodeEnd = endOffset;
+
+    if (nodeStart >= nodeEnd) continue;
+    const span = wrapTextInNode(node, nodeStart, nodeEnd);
+    if (span) spans.push(span);
+  }
+
+  return spans;
 }
 
 function buildHighlightNeedles(query) {
@@ -1329,9 +1600,9 @@ function initSelectionTooltip() {
   area.addEventListener("mouseup", (e) => {
     const sel = window.getSelection();
     if (sel && sel.toString().trim().length > 4) {
-      const rect = area.getBoundingClientRect();
-      tooltip.style.top  = Math.max(0, e.clientY - rect.top - 48) + "px";
-      tooltip.style.left = clamp(e.clientX - rect.left - 70, 4, rect.width - 180) + "px";
+      const maxLeft = Math.max(4, window.innerWidth - 180);
+      tooltip.style.top  = Math.max(0, e.clientY - 48) + "px";
+      tooltip.style.left = clamp(e.clientX - 70, 4, maxLeft) + "px";
       tooltip.classList.add("show");
     } else {
       hideTooltip();
@@ -1346,15 +1617,296 @@ function initSelectionTooltip() {
   document.getElementById("sel-highlight").addEventListener("click", () =>
     saveSelection(null)
   );
-  document.getElementById("sel-note").addEventListener("click", () => {
-    const note = prompt("Add a note (optional):");
-    saveSelection(note ?? null);
+  document.getElementById("sel-note").addEventListener("click", async () => {
+    const selectedQuote = window.getSelection()?.toString().trim() || "";
+    const note = await showAddNoteDialog();
+    await saveSelection(note, selectedQuote);
   });
 }
 
-async function saveSelection(note) {
+// --- Image viewer ---
+
+function initImageViewer() {
+  const content = document.getElementById("content");
+  if (!content) return;
+
+  _imageViewerBackdrop = document.createElement("div");
+  _imageViewerBackdrop.className = "image-viewer-backdrop";
+  _imageViewerBackdrop.setAttribute("aria-hidden", "true");
+
+  _imageViewerPanel = document.createElement("aside");
+  _imageViewerPanel.className = "image-viewer-panel";
+  _imageViewerPanel.setAttribute("aria-hidden", "true");
+  _imageViewerPanel.innerHTML = `
+    <div class="image-viewer-stage">
+      <img class="image-viewer-img" alt="" />
+      <div class="image-viewer-caption" aria-hidden="true"></div>
+    </div>
+  `;
+
+  content.appendChild(_imageViewerBackdrop);
+  content.appendChild(_imageViewerPanel);
+
+  _imageViewerMenu = document.createElement("div");
+  _imageViewerMenu.className = "image-viewer-menu";
+  _imageViewerMenu.setAttribute("role", "menu");
+  _imageViewerMenu.setAttribute("aria-hidden", "true");
+  _imageViewerMenu.innerHTML = `
+    <div class="image-viewer-menu-title">Image</div>
+    <button class="image-viewer-menu-item" type="button" data-action="copy" role="menuitem">Copy image</button>
+    <button class="image-viewer-menu-item" type="button" data-action="export" role="menuitem">Export image...</button>
+  `;
+  content.appendChild(_imageViewerMenu);
+
+  _imageViewerImg = _imageViewerPanel.querySelector(".image-viewer-img");
+  _imageViewerCaption = _imageViewerPanel.querySelector(".image-viewer-caption");
+
+  _imageViewerBackdrop.addEventListener("click", closeImageViewer);
+  _imageViewerPanel.addEventListener("click", (event) => {
+    if (event.target === _imageViewerPanel) closeImageViewer();
+  });
+  _imageViewerImg?.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setImageMenuSource(_imageViewerImg);
+    openImageViewerMenu(event.clientX, event.clientY);
+  });
+  const readingArea = document.getElementById("reading-area");
+  readingArea?.addEventListener("contextmenu", (event) => {
+    if (!(event.target instanceof Element)) return;
+    const img = event.target.closest("img");
+    if (!img || !img.closest(".chapter-body")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setImageMenuSource(img);
+    openImageViewerMenu(event.clientX, event.clientY);
+  });
+  _imageViewerMenu.addEventListener("click", (event) => {
+    const action = event.target?.closest?.("[data-action]")?.getAttribute("data-action");
+    if (action === "copy") {
+      void copyImageFromViewer();
+    } else if (action === "export") {
+      void exportImageFromViewer();
+    }
+  });
+  document.addEventListener("click", (event) => {
+    if (_imageViewerMenuOpen && !_imageViewerMenu.contains(event.target)) {
+      closeImageViewerMenu();
+    }
+  });
+  document.addEventListener("scroll", () => {
+    if (_imageViewerMenuOpen) closeImageViewerMenu();
+  }, true);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && _imageViewerPanel?.classList.contains("open")) {
+      event.preventDefault();
+      closeImageViewerMenu();
+      closeImageViewer();
+    }
+    if (event.key === "Escape") closeImageViewerMenu();
+  });
+}
+
+function openImageViewerMenu(x, y) {
+  if (!_imageViewerMenu || !_imageViewerMenuSrc) return;
+
+  _imageViewerMenuOpen = true;
+  _imageViewerMenu.classList.add("open");
+  _imageViewerMenu.setAttribute("aria-hidden", "false");
+  _imageViewerMenu.style.visibility = "hidden";
+  _imageViewerMenu.style.left = "0px";
+  _imageViewerMenu.style.top = "0px";
+
+  requestAnimationFrame(() => {
+    if (!_imageViewerMenu) return;
+    const rect = _imageViewerMenu.getBoundingClientRect();
+    const maxX = window.innerWidth - rect.width - 8;
+    const maxY = window.innerHeight - rect.height - 8;
+    const left = clamp(x, 8, Math.max(8, maxX));
+    const top = clamp(y, 8, Math.max(8, maxY));
+    _imageViewerMenu.style.left = `${left}px`;
+    _imageViewerMenu.style.top = `${top}px`;
+    _imageViewerMenu.style.visibility = "";
+  });
+}
+
+function setImageMenuSource(img) {
+  if (!img) return;
+  const src = img.getAttribute("src") || "";
+  if (!src) return;
+  _imageViewerMenuSrc = src;
+  _imageViewerMenuAlt = String(img.getAttribute("alt") || "").trim();
+}
+
+function closeImageViewerMenu() {
+  if (!_imageViewerMenuOpen || !_imageViewerMenu) return;
+  _imageViewerMenuOpen = false;
+  _imageViewerMenu.classList.remove("open");
+  _imageViewerMenu.setAttribute("aria-hidden", "true");
+  _imageViewerMenu.style.left = "-9999px";
+  _imageViewerMenu.style.top = "-9999px";
+}
+
+async function copyImageFromViewer() {
+  if (!_imageViewerMenuSrc) return;
+  closeImageViewerMenu();
+
+  try {
+    const blob = await fetchImageBlob(_imageViewerMenuSrc);
+    if (!blob) throw new Error("Image not available");
+
+    try {
+      const { writeImage } = await import("@tauri-apps/plugin-clipboard-manager");
+      const { Image } = await import("@tauri-apps/api/image");
+      if (writeImage) {
+        const pngBytes = await rasterizeImageToPngBytes(blob);
+        const tauriImage = await Image.fromBytes(pngBytes);
+        await writeImage(tauriImage);
+        toast("Image copied to clipboard");
+        return;
+      }
+    } catch {
+      // Fall back to web clipboard below.
+    }
+
+    if (navigator.clipboard?.write && window.ClipboardItem) {
+      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+      toast("Image copied to clipboard");
+      return;
+    }
+
+    const dataUrl = await blobToDataUrl(blob);
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(dataUrl);
+      toast("Copied image data URL");
+      return;
+    }
+
+    throw new Error("Clipboard image copy not supported");
+  } catch (err) {
+    toast(`Copy failed: ${err.message}`);
+  }
+}
+
+async function exportImageFromViewer() {
+  if (!_imageViewerMenuSrc) return;
+  closeImageViewerMenu();
+
+  try {
+    const blob = await fetchImageBlob(_imageViewerMenuSrc);
+    if (!blob) throw new Error("Image not available");
+
+    const ext = (blob.type.split("/")[1] || "png").replace(/[^a-z0-9]+/gi, "");
+    const base = (_imageViewerMenuAlt || "image").replace(/[^a-z0-9._-]+/gi, "_");
+    const defaultName = `${base || "image"}.${ext || "png"}`;
+
+    const { save } = await import("@tauri-apps/plugin-dialog");
+    const path = await save({
+      defaultPath: defaultName,
+      filters: [{ name: "Image", extensions: [ext || "png"] }],
+    });
+    if (!path) return;
+
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    const { writeFile } = await import("@tauri-apps/plugin-fs");
+
+    try {
+      await writeFile(path, bytes);
+    } catch {
+      await writeFile({ path, contents: bytes });
+    }
+
+    toast("Image exported");
+  } catch (err) {
+    toast(`Export failed: ${err.message}`);
+  }
+}
+
+async function fetchImageBlob(src) {
+  const res = await fetch(src);
+  if (!res.ok) throw new Error("Image fetch failed");
+  return await res.blob();
+}
+
+async function rasterizeImageToPngBytes(blob) {
+  const bitmap = await createImageBitmap(blob);
+  const canvas = document.createElement("canvas");
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas not available");
+  ctx.drawImage(bitmap, 0, 0);
+
+  const pngBlob = await new Promise((resolve) =>
+    canvas.toBlob((b) => resolve(b), "image/png")
+  );
+  if (!pngBlob) throw new Error("PNG conversion failed");
+  return new Uint8Array(await pngBlob.arrayBuffer());
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Failed to read image"));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function openImageViewer(img) {
+  if (!_imageViewerBackdrop || !_imageViewerPanel || !_imageViewerImg) return;
+
+  if (_imageViewerCloseTimer) {
+    clearTimeout(_imageViewerCloseTimer);
+    _imageViewerCloseTimer = null;
+  }
+
+  const src = img.getAttribute("src") || "";
+  if (!src) return;
+
+  _imageViewerImg.src = src;
+  const altText = String(img.getAttribute("alt") || "").trim();
+  _imageViewerImg.alt = altText || "Image preview";
+  setImageMenuSource(_imageViewerImg);
+  if (_imageViewerCaption) {
+    _imageViewerCaption.textContent = altText;
+    _imageViewerCaption.setAttribute("aria-hidden", altText ? "false" : "true");
+  }
+
+  _imageViewerBackdrop.classList.add("open");
+  _imageViewerPanel.classList.add("open");
+  _imageViewerBackdrop.setAttribute("aria-hidden", "false");
+  _imageViewerPanel.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+
+function closeImageViewer() {
+  if (!_imageViewerBackdrop || !_imageViewerPanel || !_imageViewerImg) return;
+
+  if (_imageViewerCloseTimer) return;
+
+  _imageViewerBackdrop.classList.remove("open");
+  _imageViewerPanel.classList.remove("open");
+  closeImageViewerMenu();
+
+  _imageViewerCloseTimer = setTimeout(() => {
+    _imageViewerCloseTimer = null;
+    _imageViewerBackdrop.setAttribute("aria-hidden", "true");
+    _imageViewerPanel.setAttribute("aria-hidden", "true");
+    _imageViewerImg.src = "";
+    _imageViewerMenuSrc = "";
+    _imageViewerMenuAlt = "";
+    if (_imageViewerCaption) {
+      _imageViewerCaption.textContent = "";
+      _imageViewerCaption.setAttribute("aria-hidden", "true");
+    }
+    document.body.style.overflow = "";
+  }, 140);
+}
+
+async function saveSelection(note, quoteOverride = "") {
   const sel = window.getSelection();
-  const quote = sel?.toString().trim();
+  const quote = quoteOverride || sel?.toString().trim();
   hideTooltip();
   if (!quote) return;
 

@@ -147,6 +147,7 @@ pub struct NewAnnotation {
     pub book_id:     String,
     pub chapter_idx: usize,
     pub quote:       String,
+    pub quote_html:  Option<String>,
     pub note:        Option<String>,
     pub color:       Option<String>,
 }
@@ -161,7 +162,7 @@ pub async fn add_annotation(
     }
     library::add_annotation(
         &pool, &ann.book_id, ann.chapter_idx,
-        &ann.quote, ann.note.as_deref(),
+        &ann.quote, ann.quote_html.as_deref(), ann.note.as_deref(),
         ann.color.as_deref().unwrap_or("amber"),
     )
 }
@@ -180,6 +181,27 @@ pub async fn delete_annotation(
     annotation_id: String,
 ) -> Result<()> {
     library::delete_annotation(&pool, &annotation_id)
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize)]
+pub struct AnnotationOrderUpdate {
+    pub id: String,
+    pub order: i64,
+}
+
+#[allow(dead_code)]
+#[tauri::command]
+pub async fn update_annotation_order(
+    pool: State<'_, DbPool>,
+    book_id: String,
+    orders: Vec<AnnotationOrderUpdate>,
+) -> Result<()> {
+    let mapped: Vec<(String, i64)> = orders
+        .into_iter()
+        .map(|o| (o.id, o.order))
+        .collect();
+    library::update_annotation_order(&pool, &book_id, &mapped)
 }
 
 // ── Search ────────────────────────────────────────────────────────────────────

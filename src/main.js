@@ -341,3 +341,5 @@ lib.load();
 updateReadingTabAvailability();
 updateSearchVisibility();
 updateReaderActivity();
+
+document.addEventListener("contextmenu", (e) => e.preventDefault());

@@ -80,21 +80,25 @@ export const addReadingTime = (bookId, seconds) => call("add_reading_time", { bo
 // --- Annotations ---
 
 /**
- * @param {{ bookId, chapterIdx, quote, note?, color? }} ann
+ * @param {{ bookId, chapterIdx, quote, quoteHtml?, note?, color? }} ann
  * @returns {Promise<Annotation>}
  */
-export const addAnnotation = ({ bookId, chapterIdx, quote, note, color }) =>
+export const addAnnotation = ({ bookId, chapterIdx, quote, quoteHtml, note, color }) =>
   call("add_annotation", {
     ann: {
       book_id: bookId,
       chapter_idx: chapterIdx,
       quote,
+      quote_html: quoteHtml ?? null,
       note,
       color,
     },
   });
 
 export const getAnnotations = (bookId) => call("get_annotations", { bookId });
+
+export const updateAnnotationOrder = (bookId, orders) =>
+  call("update_annotation_order", { bookId, orders });
 
 export const deleteAnnotation = (annotationId) =>
   call("delete_annotation", { annotationId });
@@ -132,8 +136,8 @@ export const windowClose    = () => call("window_close");
  * @typedef {{ chapter_idx:number, anchor?:string|null }} LinkTarget
  *
  * @typedef {{ id:string, book_id:string, chapter_idx:number,
- *             quote:string, note:string|null, color:string,
- *             created_at:string }} Annotation
+ *             quote:string, quote_html:string|null, note:string|null, color:string,
+ *             ann_order:number, created_at:string }} Annotation
  *
  * @typedef {{ chapter_idx:number, snippet:string,
  *             match_start:number, match_len:number }} SearchResult

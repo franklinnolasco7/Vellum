@@ -43,8 +43,10 @@ pub struct Annotation {
     pub book_id: String,
     pub chapter_idx: usize,
     pub quote: String,
+    pub quote_html: Option<String>,
     pub note: Option<String>,
     pub color: String,
+    pub ann_order: i64,
     pub created_at: String,
 }
 
@@ -326,25 +328,29 @@ pub fn add_annotation(
     book_id: &str,
     chapter_idx: usize,
     quote: &str,
+    quote_html: Option<&str>,
     note: Option<&str>,
     color: &str,
 ) -> Result<Annotation> {
     let conn = pool.get().map_err(|e| Error::Db(e.to_string()))?;
     let id  = Uuid::new_v4().to_string();
     let now = Utc::now().to_rfc3339();
+    let ann_order = Utc::now().timestamp();
     conn.execute(
         "INSERT INTO annotations
-         (id, book_id, chapter_idx, quote, note, color, created_at)
-         VALUES (?1,?2,?3,?4,?5,?6,?7)",
-        params![id, book_id, chapter_idx as i64, quote, note, color, now],
+         (id, book_id, chapter_idx, quote, quote_html, note, color, created_at, ann_order)
+         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)",
+        params![id, book_id, chapter_idx as i64, quote, quote_html, note, color, now, ann_order],
     )?;
     Ok(Annotation {
         id,
         book_id:     book_id.to_owned(),
         chapter_idx,
         quote:       quote.to_owned(),
+        quote_html:  quote_html.map(str::to_owned),
         note:        note.map(str::to_owned),
         color:       color.to_owned(),
+        ann_order,
         created_at:  now,
     })
 }
@@ -352,10 +358,10 @@ pub fn add_annotation(
 pub fn get_annotations(pool: &DbPool, book_id: &str) -> Result<Vec<Annotation>> {
     let conn = pool.get().map_err(|e| Error::Db(e.to_string()))?;
     let mut stmt = conn.prepare(
-        "SELECT id, chapter_idx, quote, note, color, created_at
+        "SELECT id, chapter_idx, quote, quote_html, note, color, ann_order, created_at
          FROM annotations
          WHERE book_id = ?1
-         ORDER BY chapter_idx, created_at",
+         ORDER BY ann_order, created_at",
     )?;
     let rows = stmt.query_map(params![book_id], |r| {
         Ok(Annotation {
@@ -363,12 +369,37 @@ pub fn get_annotations(pool: &DbPool, book_id: &str) -> Result<Vec<Annotation>> 
             book_id:     book_id.to_owned(),
             chapter_idx: r.get::<_, i64>(1)? as usize,
             quote:       r.get(2)?,
-            note:        r.get(3)?,
-            color:       r.get(4)?,
-            created_at:  r.get(5)?,
+            quote_html:  r.get(3)?,
+            note:        r.get(4)?,
+            color:       r.get(5)?,
+            ann_order:   r.get::<_, i64>(6)?,
+            created_at:  r.get(7)?,
         })
     })?;
     Ok(rows.collect::<rusqlite::Result<_>>()?)
+}
+
+#[allow(dead_code)]
+pub fn update_annotation_order(
+    pool: &DbPool,
+    book_id: &str,
+    orders: &[(String, i64)],
+) -> Result<()> {
+    if orders.is_empty() {
+        return Ok(());
+    }
+    let mut conn = pool.get().map_err(|e| Error::Db(e.to_string()))?;
+    let tx = conn.transaction().map_err(|e| Error::Db(e.to_string()))?;
+
+    for (id, order) in orders {
+        tx.execute(
+            "UPDATE annotations SET ann_order = ?1 WHERE id = ?2 AND book_id = ?3",
+            params![order, id, book_id],
+        )?;
+    }
+
+    tx.commit().map_err(|e| Error::Db(e.to_string()))?;
+    Ok(())
 }
 
 pub fn delete_annotation(pool: &DbPool, id: &str) -> Result<()> {

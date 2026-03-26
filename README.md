@@ -3,17 +3,17 @@
 - Node.js 18+
 - npm
 - Rust stable
-- WebKitGTK 4.1 dev packages
+- WebKitGTK 6.0 dev packages
 
 ```bash
 # Arch
-sudo pacman -S rustup nodejs npm webkit2gtk-4.1 base-devel
+sudo pacman -S rustup nodejs npm webkitgtk-6.0 base-devel
 
 # Fedora
-sudo dnf install rust cargo nodejs npm webkit2gtk4.1-devel
+sudo dnf install rust cargo nodejs npm webkitgtk6.0-devel
 
 # Debian / Ubuntu
-sudo apt install rustup nodejs npm libwebkit2gtk-4.1-dev
+sudo apt install rustup nodejs npm libwebkitgtk-6.0-dev
 
 rustup toolchain install stable
 rustup default stable
@@ -53,12 +53,7 @@ src-tauri/src/      rust backend and commands
 
 ## Notes (Wayland)
 
-If rendering is unstable on your system:
-
-```bash
-export WEBKIT_DISABLE_COMPOSITING_MODE=1
-export GDK_BACKEND=wayland
-```
+Vellum targets native Wayland launch without environment-variable workarounds.
 
 ## License
 

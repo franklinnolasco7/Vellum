@@ -5,10 +5,15 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
+    "clipboard-manager:default",
+    "clipboard-manager:allow-write-image",
     "dialog:default",
     "dialog:allow-open",
     "fs:default",
     "fs:read-files",
+    "fs:write-files",
+    "core:image:default",
+    "core:image:allow-from-bytes",
     "opener:default"
   ]
 }

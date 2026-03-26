@@ -13,6 +13,7 @@ async fn main() {
     env_logger::init();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
@@ -94,6 +95,7 @@ async fn main() {
             commands::add_annotation,
             commands::get_annotations,
             commands::delete_annotation,
+            commands::update_annotation_order,
             commands::search_book,
             commands::window_minimize,
             commands::window_maximize,

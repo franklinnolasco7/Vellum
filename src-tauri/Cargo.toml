@@ -14,11 +14,12 @@ name = "vellum"
 path = "src/main.rs"
 
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
+tauri-build = { version = "2.5", features = [] }
 
 [dependencies]
-tauri               = { version = "2", features = ["protocol-asset", "wry"] }
+tauri               = { version = "2.5", default-features = false, features = ["protocol-asset", "wry", "image-png"] }
 tauri-plugin-dialog = "2"
+tauri-plugin-clipboard-manager = "2"
 tauri-plugin-fs     = "2"
 tauri-plugin-opener = "2"
 serde               = { version = "1", features = ["derive"] }
