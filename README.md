@@ -8,7 +8,7 @@ _Built for readers who care._
 
 A native Tauri e-reader for Linux.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg?style=flat-square)](LICENSE)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL%20v3-teal.svg?style=flat-square)](LICENSE)
 [![Tauri](https://img.shields.io/badge/Built%20with-Tauri-24C8D8?style=flat-square&logo=tauri)](https://tauri.app)
 [![Rust](https://img.shields.io/badge/Rust-stable-CE412B?style=flat-square&logo=rust)](https://www.rust-lang.org)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=flat-square&logo=node.js)](https://nodejs.org)
