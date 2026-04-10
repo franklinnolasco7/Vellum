@@ -30,8 +30,8 @@ export function init() {
           <button class="bookinfo-btn bookinfo-btn-primary" id="bookinfo-continue">Continue reading</button>
           <button class="bookinfo-btn bookinfo-btn-icon" id="bookinfo-edit" title="Edit book details" aria-label="Edit book details">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M3 21l3.8-.8L19 8l-3-3L3.8 17.2z"></path>
-              <path d="M14 4l3 3"></path>
+              <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/>
             </svg>
           </button>
           <button class="bookinfo-btn bookinfo-btn-secondary" id="bookinfo-close-main" title="Close" aria-label="Close">

@@ -98,7 +98,7 @@ export function render() {
   count.textContent = annotations.length || "";
 
   if (!annotations.length) {
-    list.innerHTML = emptyState("pencil", "No annotations yet", "Select text while reading to add notes");
+    list.innerHTML = emptyState("highlighter", "No annotations yet", "Highlight or select text while reading");
     return;
   }
 
@@ -325,9 +325,10 @@ function initDetailPanel() {
         </svg>
       </button>
       <button class="ann-detail-jump" id="ann-detail-jump" title="Jump to location" aria-label="Jump to location">
-        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <line x1="8.5" y1="1.5" x2="8.5" y2="14.5"></line>
-          <polyline points="11.5,11.5 8.5,14.5 5.5,11.5"></polyline>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M17 12H3"/>
+          <path d="m11 18 6-6-6-6"/>
+          <path d="M21 5v14"/>
         </svg>
       </button>
     </div>

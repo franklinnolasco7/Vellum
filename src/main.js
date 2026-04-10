@@ -155,9 +155,9 @@ document.getElementById("app").innerHTML = `
           <div class="reader-chapter-title" id="reader-chapter-title">—</div>
         </div>
         <button class="icon-btn" id="btn-ann" title="Annotations" aria-label="Annotations">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M2.5 11.8L11.3 3a1.6 1.6 0 0 1 2.2 0l.5.5a1.6 1.6 0 0 1 0 2.2L5.2 14.5l-3 .6.3-3.3z"/>
-            <path d="M10.2 4.1l1.7 1.7"/>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M13 21h8"/>
+            <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>
           </svg>
         </button>
       </div>
