@@ -231,20 +231,32 @@ pub fn search(path: &Path, query: &str) -> Result<Vec<SearchResult>> {
         doc.set_current_chapter(i);
         if let Some((raw, _)) = doc.get_current_str() {
             let plain = to_plain(&raw);
-            let lower = plain.to_lowercase();
+            let plain_lower = plain.to_lowercase();
             let mut pos = 0;
-            while let Some(found) = lower[pos..].find(&q) {
+
+            while let Some(found) = plain_lower[pos..].find(&q) {
                 let abs = pos + found;
+
+                let match_len = plain[abs..]
+                    .char_indices()
+                    .nth(q.chars().count())
+                    .map(|(b, _)| b)
+                    .unwrap_or(q.len());
+
                 let s = clamp_to_char_boundary(&plain, abs.saturating_sub(60));
-                let e = clamp_to_char_boundary(&plain, (abs + q.len() + 60).min(plain.len()));
+                let e = clamp_to_char_boundary(&plain, (abs + match_len + 60).min(plain.len()));
+
                 results.push(SearchResult {
                     chapter_idx: i,
                     snippet: plain[s..e].to_owned(),
                     match_start: abs - s,
-                    match_len: q.len(),
+                    match_len,
                 });
-                pos = abs + q.len();
-                if results.len() >= 50 { return Ok(results); }
+
+                pos = abs + match_len;
+                if results.len() >= 50 {
+                    return Ok(results);
+                }
             }
         }
     }
@@ -550,15 +562,26 @@ fn stem(path: &Path) -> String {
 fn to_plain(html: &str) -> String {
     let mut out = String::with_capacity(html.len());
     let mut in_tag = false;
+    let mut last_was_space = false;
+
     for c in html.chars() {
         match c {
             '<' => in_tag = true,
-            '>' => { in_tag = false; out.push(' '); }
-            _ if !in_tag => out.push(c),
+            '>' => {
+                in_tag = false;
+                if !last_was_space {
+                    out.push(' ');
+                    last_was_space = true;
+                }
+            }
+            _ if !in_tag => {
+                out.push(c);
+                last_was_space = c == ' ';
+            }
             _ => {}
         }
     }
-    out
+    out.trim().to_string()
 }
 
 fn strip_chrome(html: &str) -> String {
