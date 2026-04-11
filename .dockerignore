@@ -24,3 +24,7 @@ src-tauri/target/
 .gitignore
 README.md
 LICENSE
+
+# Agent instructions
+.github/instructions
+.agents

@@ -24,3 +24,6 @@ src-tauri/target/
 # Runtime data
 data/
 *.db
+
+# Agent instructions
+.agents/
