@@ -1,0 +1,172 @@
+/* ── Search overlay ── */
+.search-overlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  max-height: min(62vh, calc(100% - 20px));
+  background: var(--b1);
+  border: 1px solid var(--br);
+  border-radius: 10px;
+  box-shadow: var(--shadow-soft);
+  padding: 10px 14px;
+  display: none;
+  flex-direction: column;
+  min-height: 0;
+  z-index: 10;
+}
+.search-overlay.open {
+  display: flex;
+}
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--b2);
+  border-radius: 7px;
+  padding: 7px 12px;
+  border: 1px solid var(--br);
+}
+.search-row-icon {
+  color: var(--t2);
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.search-row-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.search-close-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--t2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.search-close-btn:hover {
+  background: var(--b3);
+  color: var(--t0);
+  border-color: var(--br);
+}
+
+.search-close-btn svg {
+  width: 12px;
+  height: 12px;
+}
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--t0);
+  font-size: 15px;
+  font-family: inherit;
+}
+.search-count {
+  font-size: 12px;
+  color: var(--t2);
+}
+.search-results {
+  margin-top: 8px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 4px;
+}
+.search-result {
+  padding: 7px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.search-result:hover {
+  background: var(--b2);
+}
+.search-result-text {
+  font-size: 13px;
+  font-family: Georgia, serif;
+  color: var(--t1);
+  line-height: 1.4;
+}
+.search-result-text em {
+  color: var(--ac);
+  font-style: normal;
+  font-weight: 500;
+}
+.search-result-loc {
+  font-size: 12px;
+  color: var(--t2);
+  margin-top: 2px;
+}
+
+.search-hit-flash {
+  background-color: var(--search-hit-mid);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0;
+  will-change: background-color, opacity;
+  animation: search-hit-fade 2.2s ease-out forwards;
+}
+
+/* ── Selection tooltip ── */
+.selection-tooltip {
+  position: absolute;
+  display: none;
+  background: var(--b2);
+  border: 1px solid var(--br);
+  border-radius: 7px;
+  padding: 5px 6px;
+  gap: 4px;
+  z-index: 20;
+  white-space: nowrap;
+}
+
+@keyframes search-hit-fade {
+  0% {
+    background-color: var(--search-hit-strong);
+  }
+  55% {
+    background-color: var(--search-hit-mid);
+  }
+  100% {
+    background-color: var(--search-hit-low);
+  }
+}
+.selection-tooltip.show {
+  display: flex;
+}
+.sel-btn {
+  padding: 4px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--t1);
+  background: var(--b3);
+  border: none;
+  font-size: 12px;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.sel-btn svg {
+  width: 12px;
+  height: 12px;
+  display: block;
+}
+.sel-btn:hover {
+  background: var(--ac);
+  color: #fff;
+}
+

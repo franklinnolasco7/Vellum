@@ -1,0 +1,86 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html,
+body,
+#app {
+  height: 100%;
+  overflow: hidden;
+}
+body {
+  font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  text-rendering: optimizeLegibility;
+  font-kerning: normal;
+  -webkit-text-size-adjust: 100%;
+}
+::selection {
+  background: var(--sel);
+}
+/* ── Shell ── */
+#app {
+  display: flex;
+  flex-direction: column;
+  background: var(--b0);
+  color: var(--t0);
+  height: 100vh;
+}
+/* ── Content area ── */
+#content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+/* ── Scrollbars ── */
+/* Keep gutter stable so text doesn't shift, while preserving thumb margins on hover. */
+.reading-area,
+.toc-items,
+.ann-list,
+#view-library,
+.bookinfo-content {
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+  scrollbar-color: var(--t2) transparent;
+}
+
+::-webkit-scrollbar {
+  width: var(--scrollbar-size-hover);
+  height: var(--scrollbar-size-hover);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.reading-area::-webkit-scrollbar-corner {
+  background: var(--b0);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--t2);
+  border-radius: 999px;
+  border: var(--scrollbar-thumb-inset) solid transparent;
+  background-clip: content-box;
+  min-height: 30px;
+  transition:
+    border-width 0.16s ease,
+    background-color 0.16s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--t2);
+  border-width: var(--scrollbar-thumb-inset-hover);
+}
+::-webkit-scrollbar-thumb:active {
+  background: var(--t1);
+  border-width: var(--scrollbar-thumb-inset-hover);
+}
+

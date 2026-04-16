@@ -1,0 +1,447 @@
+/* ── Reader ── */
+#view-reader {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+.toc-panel {
+  width: 230px;
+  background: var(--b1);
+  border-right: 1px solid var(--br);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition:
+    width 0.2s,
+    opacity 0.2s;
+}
+.toc-panel.collapsed {
+  width: 0;
+  opacity: 0;
+}
+.toc-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--br);
+  font-size: 12px;
+  color: var(--t2);
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+.toc-items {
+  overflow-y: auto;
+  flex: 1;
+  padding: 5px 0;
+}
+.toc-group {
+  width: 100%;
+}
+.toc-group-header {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.toc-group-header .toc-item {
+  flex: 1;
+}
+.toc-group-toggle {
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  margin-right: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--t2);
+  cursor: pointer;
+  border-radius: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color 0.2s;
+}
+.toc-group-toggle:hover {
+  color: var(--t0);
+}
+.toc-group-toggle:focus,
+.toc-group-toggle:focus-visible {
+  outline: none;
+}
+.toc-group-chevron {
+  line-height: 1;
+  width: 12px;
+  height: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: 50% 45%;
+  transition: transform 0.2s;
+}
+
+.toc-group-chevron svg {
+  width: 12px;
+  height: 12px;
+}
+.toc-group.collapsed .toc-group-chevron {
+  transform: rotate(-90deg);
+}
+.toc-group-children {
+  overflow: hidden;
+}
+.toc-group.collapsed > .toc-group-children {
+  display: none;
+}
+.toc-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--t1);
+  border-left: 3px solid transparent;
+  border-radius: 0 6px 6px 0;
+  transition: all 0.2s;
+  line-height: 1.35;
+}
+.toc-item:hover {
+  color: var(--t0);
+  background: var(--b2);
+}
+.toc-item.active {
+  color: var(--ac);
+  border-left-color: var(--ac);
+  background: var(--ad);
+}
+.toc-item[data-depth="0"] {
+  padding-left: 12px;
+  font-size: 13px;
+}
+.toc-item[data-depth="1"] {
+  padding-left: 24px;
+  font-size: 12px;
+}
+.toc-item[data-depth="2"] {
+  padding-left: 36px;
+  font-size: 12px;
+}
+.toc-group-header[data-depth="1"] .toc-group-toggle {
+  margin-left: 12px;
+}
+.toc-group-header[data-depth="2"] .toc-group-toggle {
+  margin-left: 18px;
+}
+.toc-group-header[data-depth="3"] .toc-group-toggle {
+  margin-left: 24px;
+}
+
+.reader-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.reader-topbar {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  height: 50px;
+  background: var(--b1);
+  border-bottom: 1px solid var(--br);
+  flex-shrink: 0;
+  gap: 8px;
+}
+.reader-title-stack {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.reader-book-title {
+  font-size: 12px;
+  color: var(--t2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.reader-chapter-title {
+  font-size: 13px;
+  color: var(--t0);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.reading-area {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  background: var(--b0);
+}
+
+/* Reading typography — Flow state */
+.chapter-content {
+  max-width: 680px;
+  width: 100%;
+  padding: 36px 28px;
+}
+.chapter-num {
+  font-size: 12px;
+  color: var(--t2);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.chapter-title {
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--t0);
+  margin-bottom: 24px;
+  font-family: Georgia, serif;
+}
+.chapter-body {
+  font-family: Georgia, serif;
+  font-size: 18px;
+  line-height: 1.85;
+  color: var(--t0);
+}
+.chapter-body p {
+  margin-bottom: 1.2em;
+}
+
+/* Image handling — responsive and constrained */
+.chapter-body img,
+.chapter-body figure,
+.chapter-body picture {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1.5em auto;
+  border-radius: 4px;
+}
+.chapter-body figure {
+  margin: 1.5em 0;
+}
+.chapter-body figcaption {
+  font-size: 13px;
+  color: var(--t1);
+  text-align: center;
+  margin-top: 0.5em;
+  font-style: italic;
+}
+.chapter-body svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1.5em auto;
+}
+
+.epub-highlight {
+  background: var(--hl);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.reader-bottombar {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  height: 42px;
+  background: var(--b1);
+  border-top: 1px solid var(--br);
+  flex-shrink: 0;
+  gap: 12px;
+}
+.nav-btn {
+  padding: 5px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--br);
+  background: transparent;
+  color: var(--t1);
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.nav-btn:hover {
+  background: var(--b2);
+  color: var(--t0);
+}
+.nav-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.sort-dropdown {
+  position: relative;
+}
+
+.sort-trigger {
+  min-width: 132px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sort-trigger-chevron {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  justify-content: center;
+  align-items: center;
+  color: var(--t2);
+  transform: rotate(0deg);
+  transition: transform 0.16s ease;
+}
+
+.sort-trigger-chevron svg {
+  width: 12px;
+  height: 12px;
+}
+
+.sort-dropdown.open .sort-trigger-chevron {
+  transform: rotate(180deg);
+}
+
+.sort-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  background: var(--b1);
+  border: 1px solid var(--br);
+  border-radius: 8px;
+  box-shadow: var(--shadow-soft);
+  padding: 4px;
+  display: none;
+  z-index: 40;
+}
+
+.sort-dropdown.open .sort-menu {
+  display: block;
+}
+
+.sort-option {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--t1);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  border-radius: 6px;
+  padding: 6px 9px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.sort-option:hover {
+  background: var(--b2);
+  color: var(--t0);
+}
+
+.sort-option.active {
+  background: var(--ad);
+  color: var(--ac);
+}
+.reader-progress {
+  flex: 1;
+  height: 3px;
+  background: var(--b3);
+  border-radius: 2px;
+  overflow: visible;
+  cursor: pointer;
+  touch-action: none;
+  position: relative;
+  transition: all 0.2s;
+}
+.reader-progress::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 16px;
+  transform: translateY(-50%);
+  background: transparent;
+}
+.reader-progress:hover {
+  background: color-mix(in srgb, var(--b3) 82%, var(--ac) 18%);
+  box-shadow: none;
+}
+.reader-progress-fill {
+  height: 100%;
+  background: var(--ac);
+  transition: width 0.3s;
+  box-shadow: none;
+}
+.reader-progress-tooltip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, calc(-100% - 10px));
+  min-width: 168px;
+  max-width: min(320px, calc(100vw - 16px));
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--br);
+  background: color-mix(in srgb, var(--b1) 92%, var(--b3) 8%);
+  color: var(--t0);
+  box-shadow: var(--shadow-soft);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.18s ease,
+    visibility 0.18s ease;
+  z-index: 5;
+}
+.reader-progress-tooltip[data-placement="below"] {
+  transform: translate(-50%, 10px);
+}
+.reader-progress-tooltip.show {
+  opacity: 1;
+  visibility: visible;
+}
+.reader-progress-tooltip-title {
+  font-size: 12px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.reader-progress-tooltip-meta {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.25;
+  color: var(--t1);
+}
+.pos-label {
+  font-size: 12px;
+  color: var(--t2);
+  min-width: 46px;
+  text-align: right;
+}
+
+.theme-bw .chapter-body a,
+.theme-bw .chapter-body a:visited,
+.theme-bw .chapter-body a:hover,
+.theme-bw .chapter-body a:active {
+  color: var(--t0);
+  text-decoration-color: var(--t1);
+}
+
+.theme-bw .chapter-body img,
+.theme-bw .chapter-body picture img,
+.theme-bw .chapter-body svg {
+  filter: grayscale(1) contrast(0.95);
+  mix-blend-mode: multiply;
+  background: var(--b0);
+}
+
