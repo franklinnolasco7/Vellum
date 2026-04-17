@@ -1,7 +1,7 @@
 {
-  "productName": "vellum",
+  "productName": "Vivant",
   "version": "0.1.0",
-  "identifier": "dev.vellum.reader",
+  "identifier": "dev.vivant.reader",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
@@ -10,23 +10,18 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["deb", "rpm"],
     "icon": ["icons/128x128.png", "icons/128x128@2x.png", "icons/icon.ico"],
     "linux": {
       "deb": {
         "depends": ["libwebkitgtk-6.0-0"],
         "files": {
-          "/usr/share/applications/dev.vellum.reader.desktop": "assets/vellum.desktop"
+          "/usr/share/applications/dev.vivant.reader.desktop": "assets/vivant.desktop"
         }
       },
       "rpm": {
         "files": {
-          "/usr/share/applications/dev.vellum.reader.desktop": "assets/vellum.desktop"
-        }
-      },
-      "appimage": {
-        "files": {
-          "usr/share/applications/dev.vellum.reader.desktop": "../assets/vellum.desktop"
+          "/usr/share/applications/dev.vivant.reader.desktop": "assets/vivant.desktop"
         }
       }
     }
@@ -34,7 +29,7 @@
   "app": {
     "windows": [
       {
-        "title": "Vellum",
+        "title": "Vivant",
         "width": 1200,
         "height": 780,
         "minWidth": 720,
