@@ -1,9 +1,9 @@
 ---
-description: Vellum project rules
+description: Vivant project rules
 applyTo: "**"
 ---
 
-Vellum — GPL-3.0 Linux EPUB reader. Tauri (Rust backend) + vanilla JS frontend.
+Vivant — GPL-3.0 Linux EPUB reader. Tauri (Rust backend) + vanilla JS frontend.
 
 ## Hard rules
 
