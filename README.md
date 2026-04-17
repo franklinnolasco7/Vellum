@@ -64,7 +64,7 @@ rustup default stable
 
 ```bash
 git clone https://github.com/franklinnolasco7/Vivant.git
-cd vivant
+cd Vivant
 npm install
 npm run tauri dev
 ```
@@ -75,7 +75,7 @@ Docker is optional and provided for contributors who prefer a consistent, contai
 
 ```bash
 git clone https://github.com/franklinnolasco7/Vivant.git
-cd vivant
+cd Vivant
 ./scripts/docker-shell.sh
 ```
 
