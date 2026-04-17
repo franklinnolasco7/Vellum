@@ -1,5 +1,5 @@
 {
-  "name": "vellum",
+  "name": "Vivant",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,7 +11,7 @@
     "tauri:dev": "tauri dev",
     "tauri:build:linux": "tauri build --bundles deb,rpm",
     "build:release": "npm run build && cargo build --release --manifest-path src-tauri/Cargo.toml",
-    "run:release": "./src-tauri/target/release/vellum",
+    "run:release": "./src-tauri/target/release/vivant",
     "start:arch": "npm run build:release && npm run run:release",
     "test": "vitest run"
   },
