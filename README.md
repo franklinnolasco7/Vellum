@@ -1,6 +1,6 @@
 <div align="center">
 
-<img width="120" height="120" alt="vivant logo" src="https://github.com/user-attachments/assets/91b5141d-0e76-46cf-a5f0-c4ceba335bc3" />
+<img width="120" height="120" alt="vivant logo" src="src-tauri/icons/vivant.svg" />
 
 # Vivant
 
