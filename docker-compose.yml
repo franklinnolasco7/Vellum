@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: vivant-dev
+    ipc: host
     volumes:
       - .:/workspace
       - cargo-registry-cache:/home/developer/.cargo/registry
@@ -12,10 +13,28 @@ services:
       - npm-cache:/home/developer/.npm
       # Required for UI rendering
       - /tmp/.X11-unix:/tmp/.X11-unix
+      - /run/user/${USER_ID:-1000}/bus:/run/user/${USER_ID:-1000}/bus
     working_dir: /workspace
     environment:
       - NODE_ENV=development
       - DISPLAY=$DISPLAY
+      - DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/${USER_ID:-1000}/bus
+      - QT_X11_NO_MITSHM=1
+      - WEBKIT_DISABLE_COMPOSITING_MODE=1
+      - WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1
+      - GDK_BACKEND=x11
+      - GDK_SYNCHRONIZE=1
+      - NO_AT_BRIDGE=1
+      - GTK_A11Y=none
+      - EGL_LOG_LEVEL=fatal
+      - LIBGL_DEBUG=quiet
+    devices:
+      - /dev/dri:/dev/dri
+    security_opt:
+      - seccomp:unconfined
+    group_add:
+      - ${VIDEO_GID:-44}
+      - ${RENDER_GID:-109}
     command: /bin/bash
     stdin_open: true
     tty: true
