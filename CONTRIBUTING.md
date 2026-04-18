@@ -32,6 +32,7 @@ We use GitHub to track issues and merge changes. Here is the best way to get you
 ### Reporting Bugs & Opening Issues
 
 - **Search First:** Check if the issue or feature request has already been reported in the issue tracker.
+- **Use Templates:** Always use the [Bug Report](.github/ISSUE_TEMPLATE/bug_report.md) or [Feature Request](.github/ISSUE_TEMPLATE/feature_request.md) templates when creating issues.
 - **Be Specific:** Provide your OS, Vivant version, and clear steps to reproduce the issue.
 - **Logs:** If the application crashes, please run the application from your terminal and attach any relevant logs or output to help us debug.
 
@@ -77,7 +78,7 @@ docker compose up -d
 
 ## Code Comments
 
-We follow established best practices for documentation. Please refer to our detailed rules in [.github/instructions/commenting.instructions.md](.github/instructions/commenting.instructions.md):
+We follow established best practices for documentation. Please refer to our detailed rules in [commenting.instructions.md](.github/instructions/commenting.instructions.md):
 
 1. **Explain Why, Not What:** Provide the context and intent behind your implementation decisions rather than restating what the code does.
 2. **Be Non-duplicative:** Add value beyond what the code communicates on its own.
