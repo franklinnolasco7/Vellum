@@ -78,7 +78,7 @@ docker compose up -d
 
 ## Code Comments
 
-We follow established best practices for documentation. Please refer to our detailed rules in [commenting.instructions.md](.github/instructions/commenting.instructions.md):
+We follow established best practices for documentation:
 
 1. **Explain Why, Not What:** Provide the context and intent behind your implementation decisions rather than restating what the code does.
 2. **Be Non-duplicative:** Add value beyond what the code communicates on its own.
