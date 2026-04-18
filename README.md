@@ -83,6 +83,12 @@ For full Docker usage, see [DOCKER.md](DOCKER.md).
 
 ---
 
+## Contributing
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before PR. Project follows strict rules (GPL-3.0, parameterized SQL, no telemetry).
+
+---
+
 ## Scripts
 
 | Command               | Description                           |
