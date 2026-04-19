@@ -5,6 +5,8 @@ applyTo: "**"
 
 Vivant — GPL-3.0 Linux EPUB reader. Tauri (Rust backend) + vanilla JS frontend.
 
+Also follow: `CONTRIBUTING.md`.
+
 ## Hard rules
 
 - All `invoke()` calls go in `src/api.js` only. Never scatter across other files.
