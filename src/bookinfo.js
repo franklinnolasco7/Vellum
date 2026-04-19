@@ -175,7 +175,7 @@ function switchTab(tab) {
 function renderHero(book) {
   const cover = panel.querySelector("#bookinfo-cover");
   cover.innerHTML = book.cover_b64
-    ? `<img src="${book.cover_b64}" alt="${esc(book.title || "Book cover")}"/>`
+    ? `<img src="${book.cover_b64}" alt="${esc(book.title || "Book cover")}" decoding="sync" />`
     : fallbackCover(book.title || "Untitled");
 
   panel.querySelector("#bookinfo-title").textContent = book.title || "Untitled";

@@ -187,7 +187,7 @@ pub fn backfill_chapter_counts(pool: &DbPool) -> Result<()> {
         if !path.exists() {
             continue;
         }
-        let Ok(meta) = epub::parse_meta(path) else {
+        let Ok(meta) = epub::parse_meta(path, false) else {
             continue;
         };
         if meta.chapter_count > old_count {
@@ -231,7 +231,7 @@ pub fn backfill_book_metadata(pool: &DbPool) -> Result<()> {
             continue;
         }
 
-        let Ok(meta) = epub::parse_meta(path) else {
+        let Ok(meta) = epub::parse_meta(path, false) else {
             continue;
         };
 

@@ -51,7 +51,7 @@ pub struct SearchResult {
     pub match_len: usize,
 }
 
-pub fn parse_meta(path: &Path) -> Result<BookMeta> {
+pub fn parse_meta(path: &Path, include_cover: bool) -> Result<BookMeta> {
     let mut doc = open(path)?;
     let title = doc.mdata("title").map(|m| m.value.clone()).unwrap_or_else(|| stem(path));
     let author = doc
@@ -65,7 +65,13 @@ pub fn parse_meta(path: &Path) -> Result<BookMeta> {
     let published_at = first_meta_value(&mut doc, &["date", "published", "issued"]);
     let file_size = fs::metadata(path).ok().map(|m| m.len());
     let chapter_count = doc.get_num_chapters();
-    let cover_data = doc.get_cover().map(|(data, _mime)| data);
+    
+    let cover_data = if include_cover {
+        doc.get_cover().and_then(|(data, _mime)| resize_cover(&data))
+    } else {
+        None
+    };
+    
     Ok(BookMeta {
         title,
         author,
@@ -602,4 +608,12 @@ fn clamp_to_char_boundary(s: &str, idx: usize) -> usize {
         i -= 1;
     }
     i
+}
+
+fn resize_cover(data: &[u8]) -> Option<Vec<u8>> {
+    let img = image::load_from_memory(data).ok()?;
+    let resized = img.resize(260, 390, image::imageops::FilterType::Triangle);
+    let mut out = std::io::Cursor::new(Vec::new());
+    resized.write_to(&mut out, image::ImageFormat::Jpeg).ok()?;
+    Some(out.into_inner())
 }

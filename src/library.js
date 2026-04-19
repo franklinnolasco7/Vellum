@@ -194,7 +194,7 @@ export function render() {
     <div class="book-card" data-book-id="${esc(b.id)}">
       <div class="book-cover">
         ${b.cover_b64
-          ? `<img src="${b.cover_b64}" alt="${esc(b.title)}" loading="lazy"/>`
+          ? `<img src="${b.cover_b64}" alt="${esc(b.title)}" decoding="sync" />`
           : fallbackCover(b.title)}
         <div class="book-cover-overlay">
           <button class="overlay-btn play-btn" title="Open book" aria-label="Open book">
@@ -422,16 +422,20 @@ function showDeleteBookConfirm() {
 }
 
 async function importPaths(paths) {
-  for (const path of paths) {
-    try {
-      const book = await api.importEpub(path);
-      upsert(book);
-      toast(`"${book.title}" imported`);
-    } catch (err) {
-      toast(`Import failed: ${err.message}`);
-    }
+  const chunkSize = 20;
+  for (let i = 0; i < paths.length; i += chunkSize) {
+    const chunk = paths.slice(i, i + chunkSize);
+    await Promise.all(chunk.map(async (path) => {
+      try {
+        const book = await api.importEpub(path);
+        upsert(book);
+        toast(`"${book.title}" imported`);
+      } catch (err) {
+        toast(`Import failed: ${err.message}`);
+      }
+    }));
+    render();
   }
-  render();
 }
 
 function upsert(book) {

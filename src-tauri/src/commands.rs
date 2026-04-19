@@ -31,9 +31,16 @@ pub async fn import_epub(
         .app_cache_dir()
         .map_err(|e| Error::Io(e.to_string()).to_string())?;
 
-    epub::ensure_extracted(p, &cache_root).map_err(|e| e.to_string())?;
+    let path_clone = path.clone();
+    let meta = tokio::task::spawn_blocking(move || {
+        let p_blocking = std::path::Path::new(&path_clone);
+        epub::ensure_extracted(p_blocking, &cache_root)?;
+        epub::parse_meta(p_blocking, true)
+    })
+    .await
+    .map_err(|e| Error::Io(e.to_string()).to_string())?
+    .map_err(|e| e.to_string())?;
 
-    let meta = epub::parse_meta(p).map_err(|e| e.to_string())?;
     let id = library::add_book(
         &pool,
         &meta.title,
@@ -49,6 +56,7 @@ pub async fn import_epub(
         meta.cover_data,
     )
     .map_err(|e| e.to_string())?;
+    
     library::all_books(&pool)
         .map_err(|e| e.to_string())?
         .into_iter()

@@ -98,6 +98,7 @@ pub fn migrate(pool: &DbPool) -> Result<()> {
             WHERE ann_order = 0;
             CREATE INDEX IF NOT EXISTS idx_ann_order ON annotations(book_id, ann_order);
         "),
+
     ];
 
     let now = chrono::Utc::now().to_rfc3339();
