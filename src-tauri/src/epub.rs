@@ -253,9 +253,6 @@ pub fn search(path: &Path, query: &str) -> Result<Vec<SearchResult>> {
                 });
 
                 pos = abs + match_len;
-                if results.len() >= 50 {
-                    return Ok(results);
-                }
             }
         }
     }
