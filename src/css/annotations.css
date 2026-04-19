@@ -244,6 +244,7 @@
   border-radius: 6px;
   word-break: break-word;
   overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .ann-detail-meta {

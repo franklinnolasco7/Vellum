@@ -449,7 +449,7 @@
   padding: 0;
   background: transparent;
   border-radius: 3px;
-  white-space: normal;
+  white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: anywhere;
 }
