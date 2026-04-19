@@ -147,11 +147,13 @@ pub fn parse_toc(path: &Path) -> Result<Vec<TocEntry>> {
         merged.entry(e.chapter_idx).or_insert(e);
     }
 
-    for i in 0..total {
-        merged.entry(i).or_insert_with(|| {
-            let label = fallback_chapter_label(i, &spine_ids, path);
-            TocEntry { label, chapter_idx: i, depth: 0 }
-        });
+    if merged.is_empty() {
+        for i in 0..total {
+            merged.entry(i).or_insert_with(|| {
+                let label = fallback_chapter_label(i, &spine_ids, path);
+                TocEntry { label, chapter_idx: i, depth: 0 }
+            });
+        }
     }
 
     Ok(merged.into_values().collect())
@@ -206,18 +208,11 @@ fn fallback_chapter_label(
     format!("Chapter {}", idx + 1)
 }
 
-/// Pull a usable label from the chapter's `<title>` or first heading element.
+/// Pull a usable label from the chapter's first heading element.
 fn extract_chapter_title_from_html(idx: usize, epub_path: &Path) -> Option<String> {
     let mut doc = EpubDoc::new(epub_path).ok()?;
     doc.set_current_chapter(idx);
     let (raw, _) = doc.get_current_str()?;
-
-    // Try <title>…</title> first.
-    if let Some(t) = extract_tag_text(&raw, "title") {
-        if !t.is_empty() {
-            return Some(t);
-        }
-    }
 
     // Fall back to first heading (h1 → h4).
     for tag in &["h1", "h2", "h3", "h4"] {
@@ -269,12 +264,13 @@ pub fn get_chapter_html_with_cache(
     let snippet = safe_prefix(&html, 500);
     log::info!("Chapter HTML (first 500 bytes): {}", snippet);
 
+    let spine_ids: Vec<String> = doc.spine.iter().map(|s| s.idref.clone()).collect();
     let toc = parse_toc(path).unwrap_or_default();
     let title = toc
         .iter()
         .find(|e| e.chapter_idx == chapter_idx)
         .map(|e| e.label.clone())
-        .unwrap_or_else(|| format!("Chapter {}", chapter_idx + 1));
+        .unwrap_or_else(|| fallback_chapter_label(chapter_idx, &spine_ids, path));
 
     Ok(ChapterContent { index: chapter_idx, title, html })
 }
@@ -552,10 +548,14 @@ fn resolve_resource_path(chapter_path: &Path, src: &str) -> String {
         return String::new();
     }
 
+    let decoded = urlencoding::decode(src)
+        .map(|c| c.to_string())
+        .unwrap_or_else(|_| src.to_string());
+
     let mut base = chapter_path.to_path_buf();
     base.pop();
 
-    for comp in Path::new(src).components() {
+    for comp in Path::new(&decoded).components() {
         match comp {
             Component::ParentDir => {
                 base.pop();
