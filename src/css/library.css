@@ -140,6 +140,7 @@
   object-fit: cover;
   transform: translateZ(0);
   backface-visibility: hidden;
+  filter: brightness(0.82);
 }
 .book-cover-fallback {
   position: absolute;
@@ -293,6 +294,24 @@
 .theme-bw .book-cover,
 .theme-bw .bookinfo-cover {
   background: var(--b0);
+}
+
+.theme-sepia .book-cover img,
+.theme-sepia .book-cover-fallback,
+.theme-sepia .bookinfo-cover img,
+.theme-sepia .bookinfo-cover-fallback {
+  filter: brightness(0.96) saturate(0.85);
+  mix-blend-mode: multiply;
+  background: var(--b0);
+}
+
+.theme-light .book-cover img,
+.theme-light .book-cover-fallback,
+.theme-light .bookinfo-cover img,
+.theme-light .bookinfo-cover-fallback {
+  filter: none;
+  mix-blend-mode: normal;
+  background: none;
 }
 
 .theme-bw .book-cover img,

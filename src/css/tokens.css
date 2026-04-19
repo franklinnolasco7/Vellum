@@ -37,10 +37,10 @@
   --search-hit-low: rgba(122, 60, 20, 0.02);
 }
 .theme-light {
-  --b0: #f9f8f5;
-  --b1: #f1f0ec;
-  --b2: #e9e7e1;
-  --b3: #dedad2;
+  --b0: #f6f6f7;
+  --b1: #efeff0;
+  --b2: #e7e7e9;
+  --b3: #dcdcdf;
   --t0: #17150f;
   --t1: #4a4740;
   --t2: #6f6a5e;
@@ -54,7 +54,7 @@
   --search-hit-low: rgba(196, 135, 90, 0.02);
 }
 .theme-bw {
-  --b0: #ece9e0;
+  --b0: #e0ddd5;
   --b1: #e4e1d8;
   --b2: #dcd9d1;
   --b3: #cfcbc2;
