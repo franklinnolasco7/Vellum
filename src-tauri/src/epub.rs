@@ -147,13 +147,13 @@ pub fn parse_toc(path: &Path) -> Result<Vec<TocEntry>> {
         merged.entry(e.chapter_idx).or_insert(e);
     }
 
-    if merged.is_empty() {
-        for i in 0..total {
-            merged.entry(i).or_insert_with(|| {
-                let label = fallback_chapter_label(i, &spine_ids, path);
-                TocEntry { label, chapter_idx: i, depth: 0 }
-            });
-        }
+    // Fill gaps for any spine items that lack a TOC entry so every chapter
+    // is navigable and chapterTotal matches the real spine count.
+    for i in 0..total {
+        merged.entry(i).or_insert_with(|| {
+            let label = fallback_chapter_label(i, &spine_ids, path);
+            TocEntry { label, chapter_idx: i, depth: 0 }
+        });
     }
 
     Ok(merged.into_values().collect())
@@ -205,7 +205,7 @@ fn fallback_chapter_label(
         return label;
     }
 
-    format!("Chapter {}", idx + 1)
+    format!("Section {}", idx + 1)
 }
 
 /// Pull a usable label from the chapter's first heading element.

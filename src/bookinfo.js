@@ -52,7 +52,7 @@ export function init() {
       </div>
       <div class="bookinfo-stat">
         <div class="bookinfo-stat-value" id="stat-pages">0</div>
-        <div class="bookinfo-stat-label">Pages</div>
+        <div class="bookinfo-stat-label">Sections</div>
       </div>
       <div class="bookinfo-stat">
         <div class="bookinfo-stat-value" id="stat-annotations">0</div>
@@ -66,7 +66,7 @@ export function init() {
 
     <nav class="bookinfo-tabs" aria-label="Book info tabs">
       <button class="bookinfo-tab-btn active" data-tab="overview">Overview</button>
-      <button class="bookinfo-tab-btn" data-tab="chapters">Chapters</button>
+      <button class="bookinfo-tab-btn" data-tab="chapters">Sections</button>
       <button class="bookinfo-tab-btn" data-tab="annotations">Annotations</button>
     </nav>
 
@@ -203,7 +203,7 @@ function renderOverview(book, toc, progressChapter, progressPct) {
   panel.querySelector("#overview-progress-text").textContent = `${progressPct}%`;
 
   const current = toc.find((t) => Number(t.chapter_idx) === Number(progressChapter));
-  const currentLabel = current?.label || current?.title || `Ch ${Number(progressChapter) + 1}`;
+  const currentLabel = current?.label || current?.title || `Sec ${Number(progressChapter) + 1}`;
   const when = format.formatRelativeDate(book.last_opened || book.added_at);
   panel.querySelector("#last-read").textContent = `Last read · ${currentLabel}${when ? ` · ${when}` : ""}`;
 
@@ -224,7 +224,7 @@ function renderChapters(toc, progressChapter) {
   const flat = flattenToc(toc);
 
   if (!flat.length) {
-    list.innerHTML = "<p><em>No chapters available.</em></p>";
+    list.innerHTML = "<p><em>No sections available.</em></p>";
     return;
   }
 
@@ -232,7 +232,7 @@ function renderChapters(toc, progressChapter) {
     const chapterIdx = Number.isFinite(entry.chapter_idx) ? entry.chapter_idx : idx;
     const read = chapterIdx <= progressChapter;
     const current = chapterIdx === progressChapter;
-    const label = entry.label || entry.title || `Chapter ${chapterIdx + 1}`;
+    const label = entry.label || entry.title || `Section ${chapterIdx + 1}`;
     const displayIndex = chapterIdx + 1;
     return `
       <div class="chapter-item ${read ? "read" : "unread"} ${current ? "current" : ""}" data-depth="${entry.depth}">
@@ -264,9 +264,11 @@ function renderAnnotations(annotations, toc = []) {
   list.innerHTML = `
     <div class="annotations-summary">${summary}</div>
     ${annotations.map((ann) => {
+    const rawLabel = chapterTitleByIdx.get(ann.chapter_idx) || "";
+    const isFallback = /^Section \d+$/.test(rawLabel);
     const chapterLabel = Number.isFinite(ann.chapter_idx)
-      ? `Ch ${ann.chapter_idx + 1}${chapterTitleByIdx.get(ann.chapter_idx) ? `: ${chapterTitleByIdx.get(ann.chapter_idx)}` : ""}`
-      : "Chapter";
+      ? `Sec ${ann.chapter_idx + 1}${(rawLabel && !isFallback) ? `: ${rawLabel}` : ""}`
+      : "Section";
     return `
       <article class="annotation-item">
         <div class="annotation-bar"></div>

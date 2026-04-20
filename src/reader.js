@@ -41,7 +41,7 @@ const AUTO_PAGE_COOLDOWN_MS = 420;
 const AUTO_PAGE_WHEEL_INTENT_MS = 450;
 const PROGRESS_SAVE_DEBOUNCE_MS = 500;
 const EDGE_PAGE_INTENT_WINDOW_MS = 1800;
-const EDGE_PAGE_INTENT_MIN_GAP_MS = 320;
+const EDGE_PAGE_INTENT_MIN_GAP_MS = 150;
 
 // --- Initialize reader interactions ---
 
@@ -156,6 +156,7 @@ export async function openBook(b) {
   try {
     toc = await api.getToc(b.file_path);
     chapterTotal = toc.length || 1;
+    ann.setToc(toc);
   } catch {
     toc = [];
     chapterTotal = 1;
@@ -548,7 +549,7 @@ async function maybeAutoPageFromWheel(readingArea, deltaY) {
   }
 
   if ((deltaY > 0 && !nearBottom && !noScrollableOverflow)
-      || (deltaY < 0 && !nearTop && !noScrollableOverflow)) {
+    || (deltaY < 0 && !nearTop && !noScrollableOverflow)) {
     resetEdgePageIntent();
   }
 }
@@ -605,7 +606,7 @@ async function persistProgress() {
 
   // Serialize saves to prevent stale writes from racing newer positions.
   _progressSaveQueue = _progressSaveQueue
-    .catch(() => {})
+    .catch(() => { })
     .then(async () => {
       try {
         await api.saveProgress(bookId, chapter, clamp(pct, 0, 1));

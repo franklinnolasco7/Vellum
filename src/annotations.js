@@ -13,6 +13,11 @@ let annotations = [];
 let onJumpToChapter = (_idx) => {};
 
 let _currentBookId = null;
+let _toc = [];
+
+export function setToc(toc) {
+  _toc = Array.isArray(toc) ? toc : [];
+}
 
 // Detail panel state
 let _detailBackdrop = null;
@@ -110,7 +115,7 @@ export function render() {
       <span class="ann-delete" data-id="${a.id}" title="Delete">✕</span>
       <div class="ann-quote">"${esc(a.quote)}"</div>
       ${a.note ? `<div class="ann-note">${esc(a.note)}</div>` : ""}
-      <div class="ann-loc">Ch ${a.chapter_idx + 1}</div>
+      <div class="ann-loc">Section ${a.chapter_idx + 1}</div>
     </div>`).join("");
 
   let html = "";
@@ -380,7 +385,12 @@ function openDetailPanel(annId) {
     noteEl.innerHTML = "";
   }
 
-  metaEl.innerHTML = `<span>Chapter ${ann.chapter_idx + 1}</span>`;
+  const tocTitle = _toc.find((e) => e.chapter_idx === ann.chapter_idx)?.label || "";
+  const isFallback = /^Section \d+$/.test(tocTitle);
+  const metaLabel = (tocTitle && !isFallback)
+    ? `Section ${ann.chapter_idx + 1}: ${tocTitle}`
+    : `Section ${ann.chapter_idx + 1}`;
+  metaEl.innerHTML = `<span>${esc(metaLabel)}</span>`;
 
   // Show panel
   _detailBackdrop.classList.add("open");

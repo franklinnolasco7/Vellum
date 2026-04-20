@@ -303,7 +303,7 @@ function showTooltip(clientX) {
 function chapterTooltipTitle(targetChapter) {
   const label = _chapterTooltipTitles[targetChapter];
   if (label) return label;
-  return `Chapter ${targetChapter + 1}`;
+  return `Section ${targetChapter + 1}`;
 }
 
 function getProgressBarElement() {
