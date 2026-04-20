@@ -449,19 +449,21 @@
 }
 
 .chapter-body img,
-.chapter-body picture img {
-  filter: brightness(0.82);
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+.chapter-body picture img,
+.chapter-body svg {
+  filter: grayscale(1) invert(1) brightness(0.95);
+  mix-blend-mode: screen;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
 }
 
 .theme-sepia .chapter-body img,
 .theme-sepia .chapter-body picture img,
 .theme-sepia .chapter-body svg {
-  filter: brightness(0.96) saturate(0.85);
-  mix-blend-mode: darken;
-  background: var(--b0);
+  filter: saturate(0.85);
+  mix-blend-mode: multiply;
+  background: transparent;
   box-shadow: none;
   border-radius: 0;
   border: none;
@@ -471,8 +473,8 @@
 .theme-light .chapter-body picture img,
 .theme-light .chapter-body svg {
   filter: none;
-  mix-blend-mode: darken;
-  background: var(--b0);
+  mix-blend-mode: multiply;
+  background: transparent;
   box-shadow: none;
   border-radius: 0;
   border: none;
@@ -481,9 +483,9 @@
 .theme-bw .chapter-body img,
 .theme-bw .chapter-body picture img,
 .theme-bw .chapter-body svg {
-  filter: grayscale(1) contrast(0.95);
-  mix-blend-mode: darken;
-  background: var(--b0);
+  filter: grayscale(1);
+  mix-blend-mode: multiply;
+  background: transparent;
   box-shadow: none;
   border-radius: 0;
   border: none;
