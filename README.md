@@ -6,15 +6,9 @@
 <p align="center">A native Tauri e-reader for Linux.</p>
 
 <p align="center">
-  <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-GPL%20v3-teal.svg?style=flat-square" alt="License" />
-  </a>
-  <a href="https://www.linux.org/pages/download/">
-    <img src="https://img.shields.io/badge/Platform-Linux-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Platform" />
-  </a>
-  <a href="https://github.com/franklinnolasco7/Vivant/releases">
-    <img src="https://img.shields.io/badge/Status-Unreleased-lightgrey?style=flat-square" alt="Status" />
-  </a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPL%20v3-teal.svg?style=flat-square" alt="License" /></a>
+  <a href="https://www.linux.org/pages/download/"><img src="https://img.shields.io/badge/Platform-Linux-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Platform" /></a>
+  <a href="https://github.com/franklinnolasco7/Vivant/releases"><img src="https://img.shields.io/badge/Status-Unreleased-lightgrey?style=flat-square" alt="Status" /></a>
 
 </p>
 
