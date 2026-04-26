@@ -40,8 +40,8 @@ body {
 }
 
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -55,14 +55,20 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--t2);
+  background: color-mix(in srgb, var(--t2) 50%, transparent);
   border-radius: 999px;
-  min-height: 30px;
-  transition: background-color 0.16s ease;
+  min-height: 24px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.16s ease, border-width 0.16s ease;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--t1);
+  background: color-mix(in srgb, var(--t1) 75%, transparent);
+  background-clip: padding-box;
+  border-width: 0px;
 }
 ::-webkit-scrollbar-thumb:active {
-  background: var(--t0);
+  background: var(--t1);
+  background-clip: padding-box;
+  border-width: 0px;
 }
