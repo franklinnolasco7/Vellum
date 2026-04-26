@@ -10,7 +10,7 @@ import { esc, emptyState, toast } from "./ui.js";
 let annotations = [];
 
 /** onJumpToChapter callback triggered when user clicks an annotation **/
-let onJumpToChapter = (_idx) => {};
+let onJumpToChapter = (_idx) => { };
 
 let _currentBookId = null;
 let _toc = [];
@@ -67,7 +67,7 @@ export function init({ onJump }) {
 
   document.getElementById("ann-list").addEventListener("click", (e) => {
     if (_dragging) return;
-    const item   = e.target.closest(".ann-item");
+    const item = e.target.closest(".ann-item");
     const delBtn = e.target.closest(".ann-delete");
     if (delBtn) {
       e.stopPropagation();
@@ -97,7 +97,7 @@ export async function load(bookId) {
 }
 
 export function render() {
-  const list  = document.getElementById("ann-list");
+  const list = document.getElementById("ann-list");
   const count = document.getElementById("ann-count");
   count.textContent = annotations.length || "";
 
@@ -357,9 +357,9 @@ function initDetailPanel() {
     jumpToDetailAnnotation();
   });
 
-  // Keyboard: Escape to close
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && _detailPanel && _detailPanel.classList.contains("open")) {
+      e.preventDefault();
       closeDetailPanel();
     }
   });

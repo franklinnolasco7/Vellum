@@ -13,6 +13,8 @@ let onOpenBook = (_book) => {};
 
 let selectionMode = false;
 let selectedBookIds = new Set();
+let selectionAnchorId = null;
+let lastShiftSelectedIds = new Set();
 
 const SORT_OPTIONS = [
   {
@@ -228,7 +230,7 @@ export function render() {
     const bookId = card.dataset.bookId;
     const book = books.find(b => b.id === bookId);
     if (!book) return;
-    attachBookCardHandlers(card, book);
+    attachBookCardHandlers(card, book, filteredBooks);
   });
 }
 
@@ -279,18 +281,48 @@ function buildBookCard(b) {
 }
 
 /** Attaches click handlers to a rendered book card. */
-function attachBookCardHandlers(card, book) {
+function attachBookCardHandlers(card, book, filteredBooks) {
   const playBtn = card.querySelector(".play-btn");
   const infoBtn = card.querySelector(".info-btn");
 
   card.addEventListener("click", (e) => {
     if (selectionMode) {
       e.preventDefault();
+      
+      if (e.shiftKey && selectionAnchorId) {
+        const anchorIdx = filteredBooks.findIndex(b => b.id === selectionAnchorId);
+        const currIdx = filteredBooks.findIndex(b => b.id === book.id);
+        
+        if (anchorIdx !== -1 && currIdx !== -1) {
+          for (const id of lastShiftSelectedIds) {
+            if (id !== selectionAnchorId) {
+              selectedBookIds.delete(id);
+            }
+          }
+          lastShiftSelectedIds.clear();
+          
+          const start = Math.min(anchorIdx, currIdx);
+          const end = Math.max(anchorIdx, currIdx);
+          
+          for (let i = start; i <= end; i++) {
+            const id = filteredBooks[i].id;
+            selectedBookIds.add(id);
+            if (id !== selectionAnchorId) {
+              lastShiftSelectedIds.add(id);
+            }
+          }
+          render();
+          return;
+        }
+      }
+
       if (selectedBookIds.has(book.id)) {
         selectedBookIds.delete(book.id);
       } else {
         selectedBookIds.add(book.id);
       }
+      selectionAnchorId = book.id;
+      lastShiftSelectedIds.clear();
       render();
       return;
     }
@@ -382,7 +414,10 @@ function initSortDropdown() {
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
-      closeMenu();
+      if (dropdown.classList.contains("open")) {
+        e.preventDefault();
+        closeMenu();
+      }
     }
   });
 
@@ -483,6 +518,8 @@ function showDeleteBookConfirm() {
 function setSelectionMode(enabled) {
   selectionMode = enabled;
   selectedBookIds.clear();
+  selectionAnchorId = null;
+  lastShiftSelectedIds.clear();
   
   const normalActions = document.getElementById("library-actions-normal");
   const selActions = document.getElementById("library-actions-selection");
@@ -492,6 +529,14 @@ function setSelectionMode(enabled) {
   const libView = document.getElementById("view-library");
   if (libView) libView.classList.toggle("selection-mode", enabled);
   render();
+}
+
+export function isSelectionMode() {
+  return selectionMode;
+}
+
+export function cancelSelectionMode() {
+  setSelectionMode(false);
 }
 
 function toggleSelectionMode() {

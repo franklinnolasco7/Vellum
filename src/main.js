@@ -273,7 +273,19 @@ function wireGlobalEvents() {
     const inInput = e.target.matches("input, textarea");
 
     if (e.key === "Escape") {
-      if (search.isOpen()) search.close();
+      if (e.defaultPrevented) return;
+      if (search.isOpen()) {
+        search.close();
+        return;
+      }
+      if (currentView === "reader") {
+        switchView("library");
+        return;
+      }
+      if (currentView === "library" && lib.isSelectionMode()) {
+        lib.cancelSelectionMode();
+        return;
+      }
       return;
     }
     if ((e.ctrlKey || e.metaKey) && e.key === "f") {

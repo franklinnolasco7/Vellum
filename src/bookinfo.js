@@ -125,7 +125,10 @@ export function init() {
   });
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && panel.classList.contains("open")) close();
+    if (e.key === "Escape" && panel.classList.contains("open")) {
+      e.preventDefault();
+      close();
+    }
   });
 }
 
@@ -354,7 +357,16 @@ async function showEditDialog(book) {
 
   dialog.querySelector("#edit-cancel").addEventListener("click", () => {
     dialog.close();
+  });
+
+  dialog.addEventListener("close", () => {
     dialog.remove();
+  });
+
+  dialog.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      e.stopPropagation();
+    }
   });
 
   dialog.addEventListener("submit", async (e) => {
