@@ -178,6 +178,9 @@
 }
 .external-link-confirm {
   width: min(520px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  box-sizing: border-box;
   background: var(--b1);
   border: 1px solid var(--br);
   border-radius: var(--radius-lg);
@@ -288,6 +291,9 @@
 }
 .add-note-dialog {
   width: min(460px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  box-sizing: border-box;
   background: var(--b1);
   border: 1px solid var(--br);
   border-radius: var(--radius-lg);

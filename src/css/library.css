@@ -148,6 +148,26 @@
   }
 }
 
+@media (max-width: 520px) {
+  #view-library {
+    padding: 14px 12px;
+  }
+  .library-title {
+    font-size: 16px;
+  }
+  .lib-search-input {
+    width: min(160px, 36vw);
+    font-size: 13px;
+  }
+  .book-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+  }
+  .book-title {
+    font-size: 12px;
+  }
+}
+
 .book-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));

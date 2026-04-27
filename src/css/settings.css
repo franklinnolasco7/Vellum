@@ -18,7 +18,7 @@
 
 .settings-panel {
   width: min(520px, calc(100vw - 32px));
-  max-height: calc(100vh - 48px);
+  max-height: min(calc(100vh - 48px), 640px);
   background: var(--b1);
   border: 1px solid var(--br);
   border-radius: var(--radius-lg);
@@ -206,7 +206,6 @@
     max-height: calc(100vh - 32px);
   }
   .settings-header,
-  .settings-tabs,
   .settings-body {
     padding-left: 16px;
     padding-right: 16px;
@@ -214,6 +213,33 @@
   .settings-tabs {
     margin-left: 16px;
     margin-right: 16px;
+  }
+}
+
+@media (max-width: 400px) {
+  .settings-backdrop {
+    padding: 12px 8px;
+  }
+  .settings-panel {
+    width: calc(100vw - 16px);
+    max-height: calc(100vh - 24px);
+    border-radius: var(--radius-md);
+  }
+  .settings-header,
+  .settings-body {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .settings-tabs {
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+  .settings-tab {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+  .settings-title {
+    font-size: 16px;
   }
 }
 

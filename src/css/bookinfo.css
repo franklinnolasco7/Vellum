@@ -491,6 +491,53 @@
   }
 }
 
+@media (max-width: 440px) {
+  .bookinfo-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+  }
+  .bookinfo-cover {
+    width: 70px;
+    height: 105px;
+  }
+  .bookinfo-title {
+    font-size: 22px;
+  }
+  .bookinfo-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .bookinfo-stat:nth-child(2) {
+    border-right: none;
+  }
+  .bookinfo-stat:nth-child(1),
+  .bookinfo-stat:nth-child(2) {
+    border-bottom: 1px solid var(--br);
+    padding-bottom: 10px;
+  }
+  .bookinfo-stat:nth-child(3),
+  .bookinfo-stat:nth-child(4) {
+    padding-top: 10px;
+  }
+  .bookinfo-stat-value {
+    font-size: 20px;
+  }
+  .bookinfo-actions {
+    flex-wrap: wrap;
+  }
+  .bookinfo-btn-primary {
+    min-width: unset;
+    flex: 1;
+  }
+  .book-edit-grid {
+    grid-template-columns: 1fr;
+  }
+  .book-edit-fullwidth {
+    grid-column: 1;
+  }
+}
+
 .book-edit-dialog {
   margin: auto;
   border: 1px solid var(--br);
@@ -499,6 +546,9 @@
   color: var(--t0);
   padding: 16px;
   width: min(460px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  box-sizing: border-box;
   box-shadow: var(--shadow-soft);
 }
 .book-edit-dialog::backdrop {
