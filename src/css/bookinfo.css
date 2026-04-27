@@ -26,6 +26,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  isolation: isolate;
 }
 .bookinfo-panel.open {
   transform: translateX(0);
@@ -52,10 +53,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: translateZ(0);
-  backface-visibility: hidden;
   filter: brightness(0.82);
-  mix-blend-mode: normal;
 }
 .bookinfo-cover-fallback svg {
   width: 100%;

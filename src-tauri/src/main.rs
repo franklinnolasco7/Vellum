@@ -10,7 +10,9 @@ use tauri::Manager;
 
 #[tokio::main]
 async fn main() {
-    std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    if std::path::Path::new("/sys/module/nvidia").exists() {
+        std::env::set_var("__NV_DISABLE_EXPLICIT_SYNC", "1");
+    }
     env_logger::init();
 
     tauri::Builder::default()
