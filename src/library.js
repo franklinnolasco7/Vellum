@@ -18,6 +18,10 @@ let selectionAnchorId = null;
 let lastShiftSelectedIds = new Set();
 let _lastFiltered = [];
 
+let renderLimit = 40;
+const CHUNK_SIZE = 40;
+let _observer = null;
+
 const SORT_OPTIONS = [
   {
     label: "Recent",
@@ -71,6 +75,7 @@ export function init({ onOpen }) {
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
       searchQuery = e.target.value.trim();
+      renderLimit = CHUNK_SIZE;
       clearTimeout(_searchDebounce);
       _searchDebounce = setTimeout(() => requestAnimationFrame(render), LIBRARY_SEARCH_DEBOUNCE_MS);
     });
@@ -190,6 +195,7 @@ async function openFilePicker(e) {
 export async function load() {
   try {
     books = await api.getLibrary();
+    renderLimit = CHUNK_SIZE;
   } catch (err) {
     toast(`Library error: ${err.message}`);
     books = [];
@@ -231,7 +237,8 @@ export function render() {
   }
 
   // --- DOM recycling: reuse existing cards instead of full innerHTML nuke ---
-  const desiredIds = new Set(filteredBooks.map(b => b.id));
+  const visibleBooks = filteredBooks.slice(0, renderLimit);
+  const desiredIds = new Set(visibleBooks.map(b => b.id));
 
   const existingCards = new Map();
   for (const card of grid.querySelectorAll(".book-card")) {
@@ -245,11 +252,11 @@ export function render() {
 
   // Clear stale non-card children (e.g. old empty-state)
   for (const child of [...grid.children]) {
-    if (!child.classList?.contains("book-card")) child.remove();
+    if (!child.classList?.contains("book-card") && !child.classList?.contains("scroll-sentinel")) child.remove();
   }
 
   let prevNode = null;
-  for (const b of filteredBooks) {
+  for (const b of visibleBooks) {
     let card = existingCards.get(b.id);
     if (card) {
       patchBookCard(card, b);
@@ -262,6 +269,34 @@ export function render() {
       grid.prepend(card);
     }
     prevNode = card;
+  }
+
+  if (renderLimit < filteredBooks.length) {
+    let sentinel = grid.querySelector(".scroll-sentinel");
+    if (!sentinel) {
+      sentinel = document.createElement("div");
+      sentinel.className = "scroll-sentinel";
+      sentinel.style.gridColumn = "1 / -1";
+      sentinel.style.height = "1px";
+      grid.appendChild(sentinel);
+    } else {
+      grid.appendChild(sentinel);
+    }
+    if (!_observer) {
+      _observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+          renderLimit += CHUNK_SIZE;
+          requestAnimationFrame(render);
+        }
+      }, { root: document.getElementById("view-library"), rootMargin: "300px" });
+    }
+    _observer.observe(sentinel);
+  } else {
+    const sentinel = grid.querySelector(".scroll-sentinel");
+    if (sentinel) {
+      if (_observer) _observer.unobserve(sentinel);
+      sentinel.remove();
+    }
   }
 }
 
@@ -448,6 +483,7 @@ function initSortDropdown() {
       return;
     }
     sortIndex = nextIndex;
+    renderLimit = CHUNK_SIZE;
     closeMenu();
     render();
   });
