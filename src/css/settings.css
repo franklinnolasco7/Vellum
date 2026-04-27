@@ -216,3 +216,85 @@
     margin-right: 16px;
   }
 }
+
+.settings-about {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.settings-about-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: var(--b2);
+  border: 1px solid var(--br);
+  border-radius: var(--radius-md);
+}
+.settings-about-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.about-icon-bg { fill: var(--ac); }
+.about-icon-fg { fill: var(--b1); }
+.settings-about-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--t0);
+  line-height: 1.2;
+}
+.settings-about-version {
+  font-size: 12px;
+  color: var(--t2);
+  margin-top: 3px;
+}
+.settings-about-desc {
+  font-size: 13px;
+  color: var(--t2);
+  line-height: 1.6;
+  padding: 0 2px;
+}
+.settings-about-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.settings-about-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--b2);
+  border: 1px solid transparent;
+  color: var(--t1);
+  font-size: 13px;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--ease);
+}
+.settings-about-link svg {
+  color: var(--t2);
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+.settings-about-link:hover {
+  background: var(--b3);
+  border-color: var(--br);
+  color: var(--t0);
+}
+.settings-about-link:hover svg {
+  color: var(--ac);
+}
+.settings-about-footer {
+  font-size: 12px;
+  color: var(--t2);
+  text-align: center;
+  padding-bottom: 4px;
+}
