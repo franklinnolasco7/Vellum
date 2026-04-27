@@ -94,16 +94,30 @@ document.getElementById("app").innerHTML = `
         <div class="library-meta" id="library-meta">Loading…</div>
       </div>
       <div class="library-actions" id="library-actions-normal">
+        <button class="lib-import-btn" id="btn-import" title="Import EPUB files">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          Import Books
+        </button>
+        <button class="lib-icon-btn" id="btn-settings" title="Settings" aria-label="Settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
         <div class="lib-search-container">
           <input
             class="lib-search-input"
             id="lib-search-input"
             type="text"
-            placeholder="Search library…"
+            placeholder="Search..."
             autocomplete="off"
           />
           <span class="lib-search-icon" aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="7" cy="7" r="4.5"/>
               <line x1="10.5" y1="10.5" x2="14" y2="14"/>
             </svg>
@@ -111,24 +125,29 @@ document.getElementById("app").innerHTML = `
         </div>
         <div class="sort-dropdown" id="sort-dropdown">
           <button
-            class="nav-btn sort-trigger"
+            class="lib-icon-btn"
             id="sort-trigger"
             title="Sort books"
             aria-label="Sort books"
             aria-haspopup="listbox"
             aria-expanded="false"
           >
-            <span id="sort-trigger-label">Sort: Recent</span>
-            <span class="sort-trigger-chevron" aria-hidden="true">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="2.5,4.5 6,8 9.5,4.5"/>
-              </svg>
-            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="4" y1="6" x2="20" y2="6"/>
+              <line x1="4" y1="12" x2="14" y2="12"/>
+              <line x1="4" y1="18" x2="9" y2="18"/>
+            </svg>
           </button>
           <div class="sort-menu" id="sort-menu" role="listbox" aria-label="Sort options"></div>
         </div>
-        <button class="nav-btn" id="btn-select" title="Select multiple books">Select</button>
-        <button class="nav-btn" id="btn-import" title="Import EPUB files">+ Import</button>
+        <button class="lib-icon-btn" id="btn-select" title="Select multiple books" aria-label="Select books">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="5" width="4" height="4" rx="0.5"/>
+            <line x1="10" y1="7" x2="21" y2="7"/>
+            <rect x="3" y="13" width="4" height="4" rx="0.5"/>
+            <line x1="10" y1="15" x2="21" y2="15"/>
+          </svg>
+        </button>
       </div>
       <div class="library-actions" id="library-actions-selection" style="display: none;">
         <button class="nav-btn" id="btn-selection-cancel">Cancel</button>

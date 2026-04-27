@@ -31,17 +31,62 @@
 }
 .library-actions {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
   flex-shrink: 0;
 }
 
-.library-actions .nav-btn {
+/* Primary Import button */
+.lib-import-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   height: 32px;
   padding: 0 14px;
+  border-radius: 7px;
+  border: none;
+  background: var(--t0);
+  color: var(--b0);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.lib-import-btn:hover {
+  opacity: 0.88;
+}
+.lib-import-btn svg {
+  flex-shrink: 0;
+}
+
+/* Icon-only circular/square button */
+.lib-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  border: 1px solid var(--br);
+  background: transparent;
+  color: var(--t1);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+  padding: 0;
+}
+.lib-icon-btn:hover {
+  background: var(--b2);
+  border-color: var(--br);
+  color: var(--t0);
+}
+.lib-icon-btn.active {
+  background: var(--b3);
+  color: var(--t0);
+  border-color: var(--br);
 }
 
 .lib-search-container {
@@ -51,15 +96,15 @@
 }
 
 .lib-search-input {
-  background: var(--b2);
+  background: var(--b1);
   border: 1px solid var(--br);
   border-radius: 7px;
   color: var(--t0);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.2;
   height: 32px;
-  padding: 0 12px 0 33px;
-  width: 220px;
+  padding: 0 12px 0 32px;
+  width: 200px;
   transition:
     border-color 0.2s,
     background 0.2s,
@@ -73,16 +118,16 @@
 .lib-search-input:focus {
   outline: none;
   border-color: var(--ac);
-  background: var(--b3);
+  background: var(--b2);
   box-shadow: 0 0 0 1px var(--ad);
 }
 
 .lib-search-icon {
   position: absolute;
-  left: 11px;
+  left: 10px;
   color: var(--t2);
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -90,8 +135,8 @@
 }
 
 .lib-search-icon svg {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
 }
 
 @media (max-width: 920px) {
@@ -106,7 +151,7 @@
   }
 
   .lib-search-input {
-    width: min(260px, 46vw);
+    width: min(200px, 40vw);
   }
 }
 

@@ -418,7 +418,7 @@ function initSortDropdown() {
         role="option"
         data-index="${idx}"
         aria-selected="false"
-      >Sort: ${esc(opt.label)}</button>`)
+      >${esc(opt.label)}</button>`)
     .join("");
 
   const closeMenu = () => {
@@ -471,12 +471,8 @@ function initSortDropdown() {
 }
 
 function syncSortDropdown() {
-  const triggerLabel = document.getElementById("sort-trigger-label");
   const menu = document.getElementById("sort-menu");
-  if (!triggerLabel || !menu) return;
-
-  const option = SORT_OPTIONS[sortIndex] || SORT_OPTIONS[0];
-  triggerLabel.textContent = `Sort: ${option.label}`;
+  if (!menu) return;
 
   menu.querySelectorAll(".sort-option").forEach((btn) => {
     const idx = Number.parseInt(btn.dataset.index ?? "", 10);
