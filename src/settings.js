@@ -3,28 +3,13 @@ import * as api from "./api.js";
 
 let panel = null;
 let activeTab = "appearance";
+let _cachedVersion = null;
 
 const THEME_OPTIONS = [
-  {
-    value: "dark",
-    label: "Dark",
-    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
-  },
-  {
-    value: "light",
-    label: "Light",
-    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>`,
-  },
-  {
-    value: "sepia",
-    label: "Sepia",
-    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>`,
-  },
-  {
-    value: "bw",
-    label: "Black & White",
-    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>`,
-  },
+  { value: "dark", label: "Dark" },
+  { value: "light", label: "Light" },
+  { value: "sepia", label: "Sepia" },
+  { value: "bw", label: "Black & White" },
 ];
 
 export function init() {
@@ -63,6 +48,13 @@ function open() {
   render();
   requestAnimationFrame(() => backdrop.classList.add("open"));
   document.addEventListener("keydown", onKeyDown, true);
+  // Pre-fetch version so About tab renders immediately
+  if (!_cachedVersion) {
+    api.getAppVersion().then((v) => {
+      _cachedVersion = v;
+      if (activeTab === "about") render();
+    }).catch(() => { });
+  }
 }
 
 function close() {
@@ -122,11 +114,10 @@ function render() {
     </div>
 
     <div class="settings-body">
-      ${
-        activeTab === "appearance" ? renderAppearance(currentTheme)
-        : activeTab === "reading"  ? renderReading()
+      ${activeTab === "appearance" ? renderAppearance(currentTheme)
+      : activeTab === "reading" ? renderReading()
         : renderAbout()
-      }
+    }
     </div>
   `;
 
@@ -176,7 +167,6 @@ function renderAppearance(currentTheme) {
             tabindex="0"
           >
             <span class="settings-row-dot"></span>
-            <span class="settings-row-icon">${t.icon}</span>
             <span class="settings-row-label">${t.label}</span>
           </div>
         `).join("")}
@@ -216,12 +206,12 @@ function renderAbout() {
         </div>
         <div>
           <div class="settings-about-name">Vivant</div>
-          <div class="settings-about-version">Version 0.1.0</div>
+          <div class="settings-about-version">Version ${_cachedVersion ?? "…"}</div>
         </div>
       </div>
 
       <div class="settings-about-desc">
-        A minimal, open-source EPUB reader for Linux. Built with Tauri and vanilla JS.
+        An open-source E-Book reader for Linux. Built with Tauri and vanilla JS.
       </div>
 
       <div class="settings-about-links">

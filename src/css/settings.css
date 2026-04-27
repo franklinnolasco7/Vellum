@@ -169,16 +169,7 @@
 .settings-theme-row.active .settings-row-dot {
   opacity: 1;
 }
-.settings-row-icon {
-  display: flex;
-  align-items: center;
-  color: var(--t2);
-  flex-shrink: 0;
-}
-.settings-row-icon svg {
-  width: var(--icon-md);
-  height: var(--icon-md);
-}
+
 .settings-row-label {
   font-size: 14px;
   color: var(--t1);
