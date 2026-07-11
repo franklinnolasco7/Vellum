@@ -10,6 +10,7 @@ import * as timer from "./reading-timer.js";
 import * as selection from "./reader-selection.js";
 import * as links from "./reader-links.js";
 import * as progressUI from "./progress-ui.js";
+import { convertFileSrc } from "@tauri-apps/api/core";
 
 /** @type {import('./api.js').Book|null} */
 let book = null;
@@ -269,12 +270,12 @@ function renderChapter(
   progressUI.hideTooltip(true);
   progressUI.clearWheelTarget();
 
+  const chapterHtml = convertLocalImageUrls(ch.html);
   document.getElementById("chapter-content").innerHTML = `
     <div class="chapter-num">${esc(ch.title)} · ${ch.index + 1} of ${chapterTotal}</div>
-    <div class="chapter-body">${ch.html}</div>`;
+    <div class="chapter-body">${chapterHtml}</div>`;
 
   links.attach(document.querySelector(".chapter-body"));
-  convertLocalImageUrls();
   setupImageErrorHandling();
 
   updateReaderUI(ch);
@@ -356,43 +357,40 @@ function scheduleProgressSave() {
   _saveTimer = setTimeout(persistProgress, PROGRESS_SAVE_DEBOUNCE_MS);
 }
 
-async function convertLocalImageUrls() {
-  const elements = [...document.querySelectorAll(".chapter-body img, .chapter-body image")];
-  if (!elements.length) return;
-
+export function fileUrlToPath(raw) {
   try {
-    const { convertFileSrc } = await import("@tauri-apps/api/core");
+    const parsed = new URL(raw);
+    if (parsed.protocol !== "file:") return null;
 
-    elements.forEach((el) => {
-      const attrs = ["src", "href", "xlink:href"];
-      let raw = "";
-      let usedAttr = "";
-      for (const attr of attrs) {
-        if (el.hasAttribute(attr)) {
-          const val = el.getAttribute(attr);
-          if (val && val.startsWith("file://")) {
-            raw = val;
-            usedAttr = attr;
-            break;
-          }
-        }
-      }
+    let pathname = decodeURIComponent(parsed.pathname);
+    if (/^\/[A-Za-z]:\//.test(pathname)) pathname = pathname.slice(1);
+    return parsed.host ? `//${parsed.host}${pathname}` : pathname;
+  } catch {
+    return null;
+  }
+}
 
-      if (!raw) return;
+function convertLocalImageUrls(html) {
+  const template = document.createElement("template");
+  template.innerHTML = String(html || "");
+
+  template.content.querySelectorAll("img, image").forEach((element) => {
+    for (const attribute of ["src", "href", "xlink:href"]) {
+      const raw = element.getAttribute(attribute);
+      if (!raw) continue;
+
+      const filePath = fileUrlToPath(raw);
+      if (!filePath) continue;
 
       try {
-        const parsed = new URL(raw);
-        let filePath = decodeURIComponent(parsed.pathname);
-        // Tauri expects Windows drive paths without the URL-style leading slash.
-        if (/^\/[A-Za-z]:\//.test(filePath)) filePath = filePath.slice(1);
-        el.setAttribute(usedAttr, convertFileSrc(filePath));
+        element.setAttribute(attribute, convertFileSrc(filePath));
       } catch {
-        // A broken conversion is worse than letting the original URL try to render.
+        // Browser previews do not expose Tauri's asset conversion internals.
       }
-    });
-  } catch {
-    // Web previews and tests do not provide Tauri's asset conversion API.
-  }
+    }
+  });
+
+  return template.innerHTML;
 }
 
 async function prevChapter() {
@@ -580,10 +578,13 @@ function setupImageErrorHandling() {
   images.forEach((img) => {
     img.addEventListener('error', () => {
       img.style.display = 'none';
+      img.dataset.loadError = 'true';
     });
 
     img.addEventListener('load', () => {
+      img.style.removeProperty('display');
       img.style.opacity = '1';
+      delete img.dataset.loadError;
     });
   });
 }

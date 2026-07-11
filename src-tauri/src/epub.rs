@@ -876,6 +876,28 @@ mod tests {
         assert_eq!(metadata.chapter_count, 1);
     }
 
+    #[test]
+    fn extracts_and_rewrites_an_embedded_chapter_image() {
+        // Arrange
+        let temp = tempdir().expect("failed to create temporary directory");
+        let epub_path = temp.path().join("Book with images.epub");
+        let cache_root = temp.path().join("cache");
+        write_minimal_epub(&epub_path);
+
+        // Act
+        let chapter = get_chapter_html_with_cache(&epub_path, 0, &cache_root)
+            .expect("failed to load chapter");
+        let extracted_root =
+            ensure_extracted(&epub_path, &cache_root).expect("failed to locate extracted EPUB");
+
+        // Assert
+        assert!(chapter.html.contains("file://"));
+        assert!(!chapter.html.contains("src=\"images/"));
+        assert!(extracted_root
+            .join("OEBPS/images/Mémoires page.png")
+            .is_file());
+    }
+
     fn write_minimal_epub(path: &Path) {
         let file = File::create(path).expect("failed to create EPUB");
         let mut archive = zip::ZipWriter::new(file);
@@ -920,6 +942,7 @@ mod tests {
   </metadata>
   <manifest>
     <item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/>
+    <item id="page-image" href="images/M%C3%A9moires%20page.png" media-type="image/png"/>
   </manifest>
   <spine><itemref idref="chapter"/></spine>
 </package>"#,
@@ -931,9 +954,16 @@ mod tests {
             .expect("failed to add chapter");
         archive
             .write_all(
-                br#"<html xmlns="http://www.w3.org/1999/xhtml"><body><h1>Chapter</h1></body></html>"#,
+                br#"<html xmlns="http://www.w3.org/1999/xhtml"><body><h1>Chapter</h1><img src="images/M%C3%A9moires%20page.png" alt="Page"/></body></html>"#,
             )
             .expect("failed to write chapter");
+
+        archive
+            .start_file("OEBPS/images/Mémoires page.png", deflated)
+            .expect("failed to add chapter image");
+        archive
+            .write_all(b"embedded-image-data")
+            .expect("failed to write chapter image");
 
         archive.finish().expect("failed to finish EPUB");
     }
