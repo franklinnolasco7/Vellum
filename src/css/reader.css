@@ -256,9 +256,9 @@
   display: flex;
   justify-content: center;
   background: var(--b0);
+  isolation: isolate;
 }
 
-/* Flow state */
 .chapter-content {
   max-width: 680px;
   width: 100%;
@@ -291,7 +291,6 @@
   margin-bottom: 1.2em;
 }
 
-/* Responsive constraints */
 .chapter-body img,
 .chapter-body figure,
 .chapter-body picture {
