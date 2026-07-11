@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { syncVersion } from "../../scripts/sync-version.js";
+import { syncVersion } from "../../scripts/version-sync.js";
 
 const tempRoots = [];
 
