@@ -10,11 +10,20 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["deb", "rpm"],
-    "icon": ["icons/128x128.png", "icons/128x128@2x.png", "icons/icon.ico"],
+    "targets": [
+      "deb",
+      "rpm"
+    ],
+    "icon": [
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
     "linux": {
       "deb": {
-        "depends": ["libwebkitgtk-6.0-0"],
+        "depends": [
+          "libwebkitgtk-6.0-0"
+        ],
         "files": {
           "/usr/share/applications/Vivant.desktop": "assets/vivant.desktop"
         }
@@ -43,7 +52,9 @@
       "csp": null,
       "assetProtocol": {
         "enable": true,
-        "scope": ["$APPCACHE/**"]
+        "scope": [
+          "$APPCACHE/**"
+        ]
       }
     }
   }
