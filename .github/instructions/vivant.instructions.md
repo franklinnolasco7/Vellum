@@ -3,7 +3,7 @@ description: Vivant project rules
 applyTo: "**"
 ---
 
-Vivant — GPL-3.0 Linux EPUB reader. Tauri (Rust backend) + vanilla JS frontend.
+Vivant — GPL-3.0 Linux and Windows EPUB reader. Tauri (Rust backend) + vanilla JS frontend.
 
 Also follow: `CONTRIBUTING.md`.
 

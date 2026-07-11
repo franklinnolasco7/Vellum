@@ -1,36 +1,86 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync } from "fs";
-import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 
-const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
-const version = pkg.version;
-if (!version || !/^\d+\.\d+\.\d+/.test(version)) {
-  console.error(`Invalid version in package.json: "${version}"`);
-  process.exit(1);
+export function syncVersion(root, version, log = () => {}) {
+  if (!VERSION_PATTERN.test(version)) {
+    throw new Error(`Invalid version: "${version}"`);
+  }
+
+  const packagePath = resolve(root, "package.json");
+  const pkg = readJson(packagePath);
+  const previousPackageVersion = pkg.version;
+  pkg.version = version;
+  writeJson(packagePath, pkg);
+  log(`package.json: ${previousPackageVersion} → ${version}`);
+
+  const packageLockPath = resolve(root, "package-lock.json");
+  if (existsSync(packageLockPath)) {
+    const packageLock = readJson(packageLockPath);
+    const previousLockVersion = packageLock.version;
+    packageLock.version = version;
+    if (packageLock.packages?.[""]) {
+      packageLock.packages[""].version = version;
+    }
+    writeJson(packageLockPath, packageLock);
+    log(`package-lock.json: ${previousLockVersion} → ${version}`);
+  }
+
+  const tauriConfPath = resolve(root, "src-tauri", "tauri.conf.json");
+  const tauriConf = readJson(tauriConfPath);
+  const previousTauriVersion = tauriConf.version;
+  tauriConf.version = version;
+  writeJson(tauriConfPath, tauriConf);
+  log(`tauri.conf.json: ${previousTauriVersion} → ${version}`);
+
+  const cargoPath = resolve(root, "src-tauri", "Cargo.toml");
+  const cargo = readFileSync(cargoPath, "utf8");
+  const updatedCargo = cargo.replace(
+    /^(version\s*=\s*)"[^"]*"/m,
+    `$1"${version}"`,
+  );
+  if (updatedCargo === cargo && !cargo.includes(`version = "${version}"`)) {
+    throw new Error("Could not find the package version in Cargo.toml");
+  }
+  writeFileSync(cargoPath, updatedCargo);
+  log(`Cargo.toml: ${cargo.match(/^version\s*=\s*"([^"]*)"/m)?.[1] ?? "?"} → ${version}`);
+
+  const cargoLockPath = resolve(root, "src-tauri", "Cargo.lock");
+  if (existsSync(cargoLockPath)) {
+    const cargoLock = readFileSync(cargoLockPath, "utf8");
+    const updatedCargoLock = cargoLock.replace(
+      /(\[\[package\]\]\s*\nname\s*=\s*"Vivant"\s*\nversion\s*=\s*")[^"]*"/,
+      `$1${version}"`,
+    );
+    if (updatedCargoLock === cargoLock && !cargoLock.includes(`name = "Vivant"\nversion = "${version}"`)) {
+      throw new Error("Could not find the Vivant package version in Cargo.lock");
+    }
+    writeFileSync(cargoLockPath, updatedCargoLock);
+    log(`Cargo.lock: synchronized to ${version}`);
+  }
 }
 
-const tauriConfPath = resolve(root, "src-tauri/tauri.conf.json");
-const tauriConf = JSON.parse(readFileSync(tauriConfPath, "utf8"));
-const prevTauri = tauriConf.version;
-tauriConf.version = version;
-writeFileSync(tauriConfPath, JSON.stringify(tauriConf, null, 2) + "\n");
-console.log(`tauri.conf.json: ${prevTauri} → ${version}`);
-
-const cargoPath = resolve(root, "src-tauri/Cargo.toml");
-let cargo = readFileSync(cargoPath, "utf8");
-const updated = cargo.replace(
-  /^(version\s*=\s*)"[^"]*"/m,
-  `$1"${version}"`
-);
-if (updated === cargo) {
-  console.log("Cargo.toml: already up to date");
-} else {
-  const prev = cargo.match(/^version\s*=\s*"([^"]*)"/m)?.[1] ?? "?";
-  writeFileSync(cargoPath, updated);
-  console.log(`Cargo.toml: ${prev} → ${version}`);
+function readJson(path) {
+  return JSON.parse(readFileSync(path, "utf8"));
 }
 
-console.log(`\nAll files synced to v${version}`);
+function writeJson(path, value) {
+  writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+const scriptPath = fileURLToPath(import.meta.url);
+if (process.argv[1] && resolve(process.argv[1]) === scriptPath) {
+  const root = resolve(dirname(scriptPath), "..");
+  const requestedVersion = process.argv[2] ?? readJson(resolve(root, "package.json")).version;
+
+  try {
+    syncVersion(root, requestedVersion, console.log);
+    console.log(`\nAll files synced to v${requestedVersion}`);
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
+}

@@ -8,8 +8,8 @@ Notes for working on Vivant or building it from source. If you only want to inst
 - **Backend:** Rust 2021
 - **Frontend:** Vite with vanilla JavaScript
 - **Database:** SQLite through `rusqlite`
-- **App platform:** Linux
-- **Package targets:** `.deb` and `.rpm`
+- **App platforms:** Linux and Windows 10/11 x64
+- **Package targets:** Linux `.deb`/`.rpm` and Windows NSIS `.exe`
 
 ## Prerequisites
 
@@ -18,7 +18,10 @@ Notes for working on Vivant or building it from source. If you only want to inst
 | Node.js | 18+ |
 | npm | 9+ |
 | Rust | stable |
-| WebKitGTK | 6.0 development packages |
+| Linux WebKitGTK | 6.0 development packages |
+| Windows build tools | Microsoft C++ Build Tools and WebView2 |
+
+### Linux prerequisites
 
 Install system dependencies for your distribution:
 
@@ -32,6 +35,18 @@ sudo dnf install rust cargo nodejs npm webkitgtk6.0-devel
 # Debian / Ubuntu
 sudo apt install rustup nodejs npm libwebkitgtk-6.0-dev
 ```
+
+### Windows prerequisites
+
+Install the following on a 64-bit Windows 10/11 machine:
+
+- Microsoft C++ Build Tools with the **Desktop development with C++** workload
+- Microsoft Edge WebView2 Runtime
+- Node.js 18 or newer
+- Rust using the MSVC toolchain (`rustup default stable-msvc`)
+
+Windows builds must be produced on Windows. The GitHub Actions release workflow
+uses a native `windows-latest` runner rather than cross-compiling from Linux.
 
 Then install and select stable Rust:
 
@@ -61,10 +76,24 @@ This starts Vite and opens the desktop app.
 | `npm run test` | Run the Vitest test suite |
 | `npm run tauri:dev` | Launch the full Tauri app in development |
 | `npm run tauri:build:linux` | Build Linux `.deb` and `.rpm` packages |
+| `npm run tauri:build:windows` | Build a Windows x64 NSIS `.exe` installer (run on Windows) |
 | `npm run build:release` | Build frontend and Rust release binary |
 | `npm run run:release` | Run the release binary |
 | `npm run start:arch` | Build and run the release binary |
 | `npm run version:sync` | Sync package version metadata |
+
+## Release channels
+
+- `beta` publishes prerelease versions such as `v1.1.0-beta.1` after native Linux
+  and Windows validation succeeds.
+- `main` publishes stable versions after the same validation gates succeed.
+- Use a `feat:` conventional commit for the initial Windows beta so semantic-release
+  selects the next minor version. Do not manually edit version fields.
+- After the Windows smoke-test checklist passes, merge `beta` into `main` to promote
+  the feature set to the stable channel.
+
+Semantic-release passes the calculated version to `npm run version:sync`, which
+updates the npm, Tauri, and Cargo manifests before tagging and packaging.
 
 ## Docker
 
@@ -96,7 +125,18 @@ Build the frontend:
 npm run build
 ```
 
-Before opening a pull request, run the checks that match your change. If you skipped one, say so in the PR.
+Before opening a pull request, run the checks that match your change. CI runs the
+frontend and Rust suites on both Linux and Windows. If you skipped a local check,
+say so in the PR.
+
+For Windows release changes, also smoke-test the installed NSIS build: native file
+dialogs, EPUB import and drag-and-drop, reading/search/annotations/progress,
+external links, image export, title-bar dragging and window controls, DPI scaling,
+and persistence after relaunch.
+
+The first Windows beta is unsigned and will trigger SmartScreen. Code signing,
+ARM64, MSI, automatic updates, and `.epub` file association are intentionally
+deferred.
 
 ## Project layout
 
@@ -126,10 +166,11 @@ Development builds use the same app id as normal builds:
 dev.vivant.reader
 ```
 
-On Linux, the database is usually here:
+The database is usually stored here:
 
 ```text
-~/.local/share/dev.vivant.reader/vivant.db
+Linux:   ~/.local/share/dev.vivant.reader/vivant.db
+Windows: %APPDATA%\dev.vivant.reader\vivant.db
 ```
 
 For a clean dev state, close the app and move or remove that database file.

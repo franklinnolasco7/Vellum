@@ -2,12 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, beta]
   pull_request:
-    branches: [main]
+    branches: [main, beta]
 
 jobs:
-  test-and-build:
+  test-and-build-linux:
+    name: Test and build (Linux)
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -44,3 +45,37 @@ jobs:
 
       - name: Run Rust Tests
         run: cargo test --manifest-path src-tauri/Cargo.toml
+
+  test-and-build-windows:
+    name: Test and build (Windows x64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Run JS Tests
+        run: npm run test
+
+      - name: Run JS Build
+        run: npm run build
+
+      - name: Run Rust Tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml --target x86_64-pc-windows-msvc

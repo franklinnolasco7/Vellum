@@ -2,7 +2,7 @@
 
 First off, thank you for considering contributing to Vivant! It's people like you who make open-source tools better for everyone.
 
-Vivant is a GPL-3.0 licensed Linux EPUB reader built with Tauri (Rust) and vanilla JavaScript. To ensure a smooth collaboration, please take a moment to review the following guidelines.
+Vivant is a GPL-3.0 licensed Linux and Windows EPUB reader built with Tauri (Rust) and vanilla JavaScript. To ensure a smooth collaboration, please take a moment to review the following guidelines.
 
 ## Code Style & Guidelines
 
@@ -39,7 +39,7 @@ We use GitHub to track issues and merge changes. Here is the best way to get you
 ### Submitting Features or Fixes
 
 - **Fork & Branch:** Create a descriptively named branch (e.g., `fix/sidebar-overlap` or `feat/custom-fonts`).
-- **Commit Messages:** Use clear, imperative statements (e.g., "Add feature", instead of "Added feature").
+- **Commit Messages:** Use Conventional Commits so releases can be versioned automatically, such as `feat: add Windows packaging`, `fix: handle an import error`, or `docs: update installation guidance`.
 - **One Change per PR:** Keep pull requests focused. If you have multiple unrelated changes, please open separate pull requests for each.
 
 ## Hard Rules

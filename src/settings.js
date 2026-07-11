@@ -211,7 +211,7 @@ function renderAbout() {
       </div>
 
       <div class="settings-about-desc">
-        An open-source E-Book reader for Linux. Built with Tauri.
+        An open-source E-Book reader for Linux and Windows. Built with Tauri.
       </div>
 
       <div class="settings-about-links">
