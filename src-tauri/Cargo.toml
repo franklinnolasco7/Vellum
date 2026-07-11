@@ -1,6 +1,6 @@
 [package]
 name = "Vivant"
-version = "1.1.0-beta.1"
+version = "1.1.0-beta.2"
 description = "An open-source E-Book reader for Linux and Windows. Built with Tauri."
 authors = []
 edition = "2021"

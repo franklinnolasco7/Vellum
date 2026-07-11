@@ -1,6 +1,6 @@
 {
   "productName": "Vivant",
-  "version": "1.1.0-beta.1",
+  "version": "1.1.0-beta.2",
   "identifier": "dev.vivant.reader",
   "build": {
     "beforeDevCommand": "npm run dev",

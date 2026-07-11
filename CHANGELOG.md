@@ -1,3 +1,10 @@
+# [1.1.0-beta.2](https://github.com/franklinnolasco7/Vivant/compare/v1.1.0-beta.1...v1.1.0-beta.2) (2026-07-11)
+
+
+### Bug Fixes
+
+* support Windows EPUB images and annotation sorting ([8b4d8f9](https://github.com/franklinnolasco7/Vivant/commit/8b4d8f90bef2783e20cff16d21733e501626e888))
+
 # [1.1.0-beta.1](https://github.com/franklinnolasco7/Vivant/compare/v1.0.0...v1.1.0-beta.1) (2026-07-11)
 
 
