@@ -7,17 +7,17 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPL%20v3-teal.svg?style=flat-square" alt="License" /></a>
-  <a href="https://www.linux.org/pages/download/"><img src="https://img.shields.io/badge/Platform-Linux-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Platform" /></a>
-  <a href="https://github.com/franklinnolasco7/Vivant/releases"><img src="https://img.shields.io/badge/Status-Pre--release-lightgrey?style=flat-square" alt="Status" /></a>
+  <img src="https://img.shields.io/badge/Platforms-Linux%20%7C%20Windows-2f7d73?style=flat-square" alt="Platforms: Linux and Windows" />
+  <a href="https://github.com/franklinnolasco7/Vivant/releases"><img src="https://img.shields.io/badge/Status-Beta-orange?style=flat-square" alt="Status: Beta" /></a>
 </p>
 
 ---
 
-Vivant is a Linux EPUB reader built with Tauri. It stores your library data locally.
+Vivant is a desktop EPUB reader for Linux and Windows built with Tauri. It stores your library data locally.
 
 ## Install
 
-Vivant is not released yet. Packages will be posted on the [GitHub Releases](https://github.com/franklinnolasco7/Vivant/releases) page.
+Download current packages from the [GitHub Releases](https://github.com/franklinnolasco7/Vivant/releases) page. Beta releases are intended for testing before stable promotion.
 
 ### Debian / Ubuntu
 
@@ -41,6 +41,17 @@ Download the `.rpm` package from the latest release, then run:
 sudo dnf install ./Vivant-*.rpm
 ```
 
+### Windows 10 / 11
+
+Download the x64 NSIS installer (`.exe`) from the latest release and run it.
+
+The initial Windows builds are unsigned. Microsoft Defender SmartScreen may show an
+"unknown publisher" warning; choose **More info**, verify that the installer came
+from the Vivant GitHub release, and then choose **Run anyway**.
+
+The beta does not register `.epub` file associations yet. Import books through
+Vivant's file picker or drag-and-drop.
+
 ### Other Linux distributions
 
 There are no packages for every distro yet. For source builds, see [Development](DEVELOPMENT.md).
@@ -49,10 +60,11 @@ There are no packages for every distro yet. For source builds, see [Development]
 
 Vivant does not need an account and has no telemetry.
 
-Your library database lives here:
+Your library database is stored in the platform app-data directory:
 
 ```text
-~/.local/share/dev.vivant.reader/vivant.db
+Linux:   ~/.local/share/dev.vivant.reader/vivant.db
+Windows: %APPDATA%\dev.vivant.reader\vivant.db
 ```
 
 Back up this file if you want to keep your library state.

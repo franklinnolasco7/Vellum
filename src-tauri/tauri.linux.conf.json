@@ -1,0 +1,23 @@
+{
+  "bundle": {
+    "targets": [
+      "deb",
+      "rpm"
+    ],
+    "linux": {
+      "deb": {
+        "depends": [
+          "libwebkitgtk-6.0-0"
+        ],
+        "files": {
+          "/usr/share/applications/Vivant.desktop": "assets/vivant.desktop"
+        }
+      },
+      "rpm": {
+        "files": {
+          "/usr/share/applications/Vivant.desktop": "assets/vivant.desktop"
+        }
+      }
+    }
+  }
+}

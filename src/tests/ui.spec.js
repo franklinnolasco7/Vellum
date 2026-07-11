@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { esc, clamp, coverColor } from "../ui.js";
 import { filterBooks, progressLabel, normalizeEpubPaths } from "../library.js";
-import { normalizeAnchorTarget } from "../reader.js";
+import { fileUrlToPath, normalizeAnchorTarget } from "../reader.js";
+import { swapAnnotationOrder } from "../annotations.js";
 
 describe("ui helpers", () => {
   describe("esc", () => {
@@ -177,6 +178,88 @@ describe("ui helpers", () => {
 
     it("preserves valid anchors without #", () => {
       expect(normalizeAnchorTarget("chapter1")).toBe("chapter1");
+    });
+  });
+
+  describe("fileUrlToPath", () => {
+    it("converts a Windows drive URL with spaces and Unicode", () => {
+      // Arrange
+      const url = "file:///C:/Users/Reader%20Name/AppData/Local/Vivant/M%C3%A9moires/page%201.png";
+
+      // Act
+      const path = fileUrlToPath(url);
+
+      // Assert
+      expect(path).toBe("C:/Users/Reader Name/AppData/Local/Vivant/Mémoires/page 1.png");
+    });
+
+    it("normalizes backslashes in a Windows file URL", () => {
+      // Arrange
+      const url = String.raw`file:///C:\Users\Reader Name\Books\page.png`;
+
+      // Act
+      const path = fileUrlToPath(url);
+
+      // Assert
+      expect(path).toBe("C:/Users/Reader Name/Books/page.png");
+    });
+
+    it("converts a Unix file URL", () => {
+      // Arrange
+      const url = "file:///home/reader/Book%20Images/page.png";
+
+      // Act
+      const path = fileUrlToPath(url);
+
+      // Assert
+      expect(path).toBe("/home/reader/Book Images/page.png");
+    });
+
+    it("preserves the host for a UNC file URL", () => {
+      // Arrange
+      const url = "file://bookshelf/Shared%20Books/page.png";
+
+      // Act
+      const path = fileUrlToPath(url);
+
+      // Assert
+      expect(path).toBe("//bookshelf/Shared Books/page.png");
+    });
+
+    it("rejects non-file and malformed URLs", () => {
+      // Arrange
+      const inputs = ["https://example.com/page.png", "not a URL"];
+
+      // Act
+      const paths = inputs.map(fileUrlToPath);
+
+      // Assert
+      expect(paths).toEqual([null, null]);
+    });
+  });
+
+  describe("swapAnnotationOrder", () => {
+    it("swaps dragged and target annotation IDs", () => {
+      // Arrange
+      const ids = ["first", "second", "third"];
+
+      // Act
+      const reordered = swapAnnotationOrder(ids, "first", "third");
+
+      // Assert
+      expect(reordered).toEqual(["third", "second", "first"]);
+      expect(ids).toEqual(["first", "second", "third"]);
+    });
+
+    it("leaves order unchanged when either annotation is missing", () => {
+      // Arrange
+      const ids = ["first", "second"];
+
+      // Act
+      const reordered = swapAnnotationOrder(ids, "missing", "second");
+
+      // Assert
+      expect(reordered).toEqual(ids);
     });
   });
 });

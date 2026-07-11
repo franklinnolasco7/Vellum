@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Vivant
 GenericName=E-Book Reader
-Comment=An open-source E-Book reader for Linux. Built with Tauri.
+Comment=An open-source E-Book reader for Linux and Windows. Built with Tauri.
 Exec=Vivant %f
 Icon=Vivant
 Type=Application

@@ -651,11 +651,7 @@ fn resolve_resource_path(chapter_path: &Path, src: &str) -> String {
 }
 
 fn path_to_unix(path: PathBuf) -> String {
-    if cfg!(windows) {
-        path.to_string_lossy().replace('\\', "/")
-    } else {
-        path.to_string_lossy().to_string()
-    }
+    path.to_string_lossy().replace('\\', "/")
 }
 
 fn detect_mime(data: &[u8]) -> &'static str {
@@ -839,4 +835,136 @@ fn get_fallback_cover(
     }
 
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+    use tempfile::tempdir;
+    use zip::write::SimpleFileOptions;
+
+    #[test]
+    fn archive_paths_use_forward_slashes_for_windows_paths() {
+        // Arrange
+        let windows_path = PathBuf::from(r"C:\Users\Reader Name\Books\Mémoires\chapter.xhtml");
+
+        // Act
+        let normalized = path_to_unix(windows_path);
+
+        // Assert
+        assert_eq!(
+            normalized,
+            "C:/Users/Reader Name/Books/Mémoires/chapter.xhtml"
+        );
+    }
+
+    #[test]
+    fn parses_epub_from_a_long_unicode_path_with_spaces() {
+        // Arrange
+        let temp = tempdir().expect("failed to create temporary directory");
+        let filename = format!("Windows path ü with spaces {}.epub", "long-".repeat(20));
+        let epub_path = temp.path().join(filename);
+        write_minimal_epub(&epub_path);
+
+        // Act
+        let metadata = parse_meta(&epub_path, false).expect("failed to parse EPUB");
+
+        // Assert
+        assert_eq!(metadata.title, "Portable Paths");
+        assert_eq!(metadata.author, "Vivant");
+        assert_eq!(metadata.chapter_count, 1);
+    }
+
+    #[test]
+    fn extracts_and_rewrites_an_embedded_chapter_image() {
+        // Arrange
+        let temp = tempdir().expect("failed to create temporary directory");
+        let epub_path = temp.path().join("Book with images.epub");
+        let cache_root = temp.path().join("cache");
+        write_minimal_epub(&epub_path);
+
+        // Act
+        let chapter = get_chapter_html_with_cache(&epub_path, 0, &cache_root)
+            .expect("failed to load chapter");
+        let extracted_root =
+            ensure_extracted(&epub_path, &cache_root).expect("failed to locate extracted EPUB");
+
+        // Assert
+        assert!(chapter.html.contains("file://"));
+        assert!(!chapter.html.contains("src=\"images/"));
+        assert!(extracted_root
+            .join("OEBPS/images/Mémoires page.png")
+            .is_file());
+    }
+
+    fn write_minimal_epub(path: &Path) {
+        let file = File::create(path).expect("failed to create EPUB");
+        let mut archive = zip::ZipWriter::new(file);
+        let stored =
+            SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+        let deflated =
+            SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+
+        archive
+            .start_file("mimetype", stored)
+            .expect("failed to add mimetype");
+        archive
+            .write_all(b"application/epub+zip")
+            .expect("failed to write mimetype");
+
+        archive
+            .start_file("META-INF/container.xml", deflated)
+            .expect("failed to add container");
+        archive
+            .write_all(
+                br#"<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>"#,
+            )
+            .expect("failed to write container");
+
+        archive
+            .start_file("OEBPS/content.opf", deflated)
+            .expect("failed to add package document");
+        archive
+            .write_all(
+                br#"<?xml version="1.0" encoding="UTF-8"?>
+<package version="3.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="book-id">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="book-id">portable-paths</dc:identifier>
+    <dc:title>Portable Paths</dc:title>
+    <dc:creator>Vivant</dc:creator>
+    <dc:language>en</dc:language>
+  </metadata>
+  <manifest>
+    <item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/>
+    <item id="page-image" href="images/M%C3%A9moires%20page.png" media-type="image/png"/>
+  </manifest>
+  <spine><itemref idref="chapter"/></spine>
+</package>"#,
+            )
+            .expect("failed to write package document");
+
+        archive
+            .start_file("OEBPS/chapter.xhtml", deflated)
+            .expect("failed to add chapter");
+        archive
+            .write_all(
+                br#"<html xmlns="http://www.w3.org/1999/xhtml"><body><h1>Chapter</h1><img src="images/M%C3%A9moires%20page.png" alt="Page"/></body></html>"#,
+            )
+            .expect("failed to write chapter");
+
+        archive
+            .start_file("OEBPS/images/Mémoires page.png", deflated)
+            .expect("failed to add chapter image");
+        archive
+            .write_all(b"embedded-image-data")
+            .expect("failed to write chapter image");
+
+        archive.finish().expect("failed to finish EPUB");
+    }
 }

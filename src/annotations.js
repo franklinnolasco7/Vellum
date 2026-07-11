@@ -21,6 +21,11 @@ let _draggedItem = null;
 let _draggedGroup = null;
 let _dragOverItem = null;
 let _dragResetTimer = null;
+let _dragPointerId = null;
+let _dragStartX = 0;
+let _dragStartY = 0;
+let _suppressDetailClick = false;
+const DRAG_THRESHOLD_PX = 6;
 
 function buildAnnotationHighlightQuery(quote) {
   const cleaned = String(quote || "")
@@ -58,7 +63,12 @@ export function init({ onJump }) {
   onJumpToChapter = onJump;
 
   document.getElementById("ann-list").addEventListener("click", (e) => {
-    if (_dragging) return;
+    if (_dragging || _suppressDetailClick) {
+      e.preventDefault();
+      e.stopPropagation();
+      _suppressDetailClick = false;
+      return;
+    }
     const item = e.target.closest(".ann-item");
     const delBtn = e.target.closest(".ann-delete");
     if (delBtn) {
@@ -100,7 +110,7 @@ export function render() {
   const notes = annotations.filter((a) => a.note);
 
   const renderItems = (items, group) => items.map((a) => `
-    <div class="ann-item" data-chapter="${a.chapter_idx}" data-id="${a.id}" data-group="${group}" draggable="true">
+    <div class="ann-item" data-chapter="${a.chapter_idx}" data-id="${a.id}" data-group="${group}">
       <span class="ann-delete" data-id="${a.id}" title="Delete">✕</span>
       <div class="ann-quote">"${esc(a.quote)}"</div>
       ${a.note ? `<div class="ann-note">${esc(a.note)}</div>` : ""}
@@ -132,87 +142,118 @@ function initDragReorder() {
   const list = document.getElementById("ann-list");
   if (!list) return;
 
-  list.addEventListener("dragstart", (event) => {
+  list.addEventListener("pointerdown", (event) => {
+    if (!event.isPrimary || event.button !== 0) return;
     const item = event.target.closest(".ann-item");
     if (!item || event.target.closest(".ann-delete")) return;
 
-    _dragging = true;
     _draggedItem = item;
     _draggedGroup = item.dataset.group || null;
-    item.classList.add("ann-item-dragging");
-
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = "move";
-      event.dataTransfer.setData("text/plain", item.dataset.id || "");
+    _dragPointerId = event.pointerId;
+    _dragStartX = event.clientX;
+    _dragStartY = event.clientY;
+    if (item.setPointerCapture) {
+      item.setPointerCapture(event.pointerId);
     }
   });
 
-  list.addEventListener("dragover", (event) => {
-    if (!_draggedItem || !_draggedGroup) return;
+  list.addEventListener("pointermove", (event) => {
+    if (event.pointerId !== _dragPointerId || !_draggedItem || !_draggedGroup) return;
+
+    if (!_dragging) {
+      const distance = Math.hypot(event.clientX - _dragStartX, event.clientY - _dragStartY);
+      if (distance < DRAG_THRESHOLD_PX) return;
+      _dragging = true;
+      _suppressDetailClick = true;
+      _draggedItem.classList.add("ann-item-dragging");
+    }
+
+    event.preventDefault();
     const hovered = document.elementFromPoint(event.clientX, event.clientY);
     const item = hovered?.closest?.(".ann-item");
-    if (!item || item === _draggedItem) return;
-    if (item.dataset.group !== _draggedGroup) return;
+    const validTarget = item
+      && item !== _draggedItem
+      && item.dataset.group === _draggedGroup
+      ? item
+      : null;
 
-    event.preventDefault();
-
-    if (_dragOverItem && _dragOverItem !== item) {
+    if (_dragOverItem && _dragOverItem !== validTarget) {
       _dragOverItem.classList.remove("ann-item-dragover");
     }
-    _dragOverItem = item;
-    _dragOverItem.classList.add("ann-item-dragover");
+    _dragOverItem = validTarget;
+    _dragOverItem?.classList.add("ann-item-dragover");
   });
 
-  list.addEventListener("drop", (event) => {
-    if (!_draggedItem || !_draggedGroup) return;
-    event.preventDefault();
-    const hovered = document.elementFromPoint(event.clientX, event.clientY);
-    const target = hovered?.closest?.(".ann-item");
-    if (target && target !== _draggedItem && target.dataset.group === _draggedGroup) {
-      finalizeDragOrder(target);
-    } else {
-      finalizeDragOrder();
+  list.addEventListener("pointerup", (event) => {
+    if (event.pointerId !== _dragPointerId) return;
+
+    if (_dragging && _draggedItem && _draggedGroup) {
+      event.preventDefault();
+      const hovered = document.elementFromPoint(event.clientX, event.clientY);
+      const target = hovered?.closest?.(".ann-item");
+      if (target && target !== _draggedItem && target.dataset.group === _draggedGroup) {
+        finalizeDragOrder(target);
+      }
     }
-    _dragging = false;
+    resetDragState();
   });
 
-  list.addEventListener("dragend", () => {
-    if (_draggedItem) {
-      _draggedItem.classList.remove("ann-item-dragging");
-    }
-    if (_dragOverItem) {
-      _dragOverItem.classList.remove("ann-item-dragover");
-    }
-    _draggedItem = null;
-    _dragOverItem = null;
-    _draggedGroup = null;
-    clearTimeout(_dragResetTimer);
-    _dragResetTimer = null;
-    _dragging = false;
+  list.addEventListener("pointercancel", (event) => {
+    if (event.pointerId === _dragPointerId) resetDragState();
   });
 }
 
+function resetDragState() {
+  if (_draggedItem) {
+    _draggedItem.classList.remove("ann-item-dragging");
+    if (_dragPointerId !== null && _draggedItem.hasPointerCapture?.(_dragPointerId)) {
+      try {
+        _draggedItem.releasePointerCapture(_dragPointerId);
+      } catch {
+        // The browser may release capture first when the pointer is cancelled.
+      }
+    }
+  }
+  _dragOverItem?.classList.remove("ann-item-dragover");
+  _draggedItem = null;
+  _dragOverItem = null;
+  _draggedGroup = null;
+  _dragPointerId = null;
+  _dragging = false;
+
+  clearTimeout(_dragResetTimer);
+  _dragResetTimer = setTimeout(() => {
+    _suppressDetailClick = false;
+    _dragResetTimer = null;
+  }, 250);
+}
+
+export function swapAnnotationOrder(ids, draggedId, targetId) {
+  const reordered = [...ids];
+  const draggedIndex = reordered.indexOf(draggedId);
+  const targetIndex = reordered.indexOf(targetId);
+  if (draggedIndex < 0 || targetIndex < 0 || draggedIndex === targetIndex) return reordered;
+
+  reordered[draggedIndex] = targetId;
+  reordered[targetIndex] = draggedId;
+  return reordered;
+}
+
 function finalizeDragOrder(target = null) {
-  if (!_draggedItem || !_draggedGroup) return;
+  if (!_draggedItem || !_draggedGroup || !target) return;
   const section = _draggedItem.closest(".ann-section");
   if (!section) return;
 
-  const orderedIds = [...section.querySelectorAll(".ann-item")]
+  const currentIds = [...section.querySelectorAll(".ann-item")]
     .map((el) => el.dataset.id)
     .filter(Boolean);
 
-  if (!orderedIds.length) return;
+  if (!currentIds.length) return;
 
   const draggedId = _draggedItem.dataset.id;
   const targetId = target?.dataset?.id;
-  if (draggedId && targetId && draggedId !== targetId) {
-    const fromIdx = orderedIds.indexOf(draggedId);
-    const toIdx = orderedIds.indexOf(targetId);
-    if (fromIdx >= 0 && toIdx >= 0) {
-      orderedIds[fromIdx] = targetId;
-      orderedIds[toIdx] = draggedId;
-    }
-  }
+  if (!draggedId || !targetId || draggedId === targetId) return;
+  const orderedIds = swapAnnotationOrder(currentIds, draggedId, targetId);
 
   const highlights = annotations.filter((a) => !a.note);
   const notes = annotations.filter((a) => a.note);

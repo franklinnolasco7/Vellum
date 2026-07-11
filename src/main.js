@@ -7,13 +7,13 @@ import * as bookinfo from "./bookinfo.js";
 import * as settings from "./settings.js";
 
 document.getElementById("app").innerHTML = `
-<div id="titlebar">
-  <span class="app-name">VIVANT</span>
+<div id="titlebar" data-tauri-drag-region>
+  <span class="app-name" data-tauri-drag-region>VIVANT</span>
   <div class="tabs">
     <div class="tab active" data-view="library">Library</div>
     <div class="tab" data-view="reader">Reading</div>
   </div>
-  <div style="flex:1"></div>
+  <div style="flex:1" data-tauri-drag-region></div>
   <button class="icon-btn icon-btn-search" id="btn-search" title="Search (Ctrl+F)" aria-label="Search">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <circle cx="7" cy="7" r="4.5"/>

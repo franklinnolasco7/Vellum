@@ -1,7 +1,7 @@
 {
   "name": "vivant",
-  "description": "An open-source E-Book reader for Linux. Built with Tauri.",
-  "version": "0.1.0",
+  "description": "An open-source E-Book reader for Linux and Windows. Built with Tauri.",
+  "version": "1.1.0-beta.2",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,12 +11,12 @@
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build:linux": "tauri build --bundles deb,rpm",
+    "tauri:build:windows": "tauri build --target x86_64-pc-windows-msvc --bundles nsis",
     "build:release": "npm run build && cargo build --release --manifest-path src-tauri/Cargo.toml",
     "run:release": "./src-tauri/target/release/Vivant",
     "start:arch": "npm run build:release && npm run run:release",
     "test": "vitest run",
-    "version:sync": "node scripts/sync-version.js",
-    "version": "node scripts/bump-version.js"
+    "version:sync": "node scripts/sync-version.js"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
