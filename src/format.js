@@ -64,7 +64,7 @@ export function formatTimeRead(book) {
   const persistedSeconds = Number(book?.reading_seconds);
   let seconds = Number.isFinite(persistedSeconds) ? persistedSeconds : 0;
 
-  // Migration: old client-side timer key may contain data before backend tracking
+  // Preserve reading time recorded before backend tracking existed.
   if (seconds <= 0 && book?.id) {
     const key = `book-time-${book.id}`;
     seconds = parseInt(localStorage.getItem(key) || "0", 10);
@@ -95,17 +95,17 @@ export function formatDescriptionHtml(rawDescription) {
   const doc = parser.parseFromString(raw, "text/html");
   const body = doc.body;
 
-  // Strip dangerous elements; keep semantic tags (p, strong, em, a, lists, quotes)
+  // Publisher metadata can contain active content; only semantic text markup is allowed.
   body.querySelectorAll("script, style, iframe, object, embed, link, meta").forEach((el) => el.remove());
 
-  // Headings become paragraphs to prevent metadata from creating oversized text blocks
+  // Metadata headings are often synopsis styling, not app-level structure.
   body.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((el) => {
     const p = doc.createElement("p");
     p.innerHTML = el.innerHTML;
     el.replaceWith(p);
   });
 
-  // To Remove layout wrappers
+  // Drop publisher layout wrappers so descriptions inherit the app's panel styling.
   body.querySelectorAll("div, section, article, span, font").forEach((el) => {
     el.replaceWith(...el.childNodes);
   });
@@ -119,7 +119,7 @@ export function formatDescriptionHtml(rawDescription) {
 
     const href = el.tagName === "A" ? (el.getAttribute("href") || "") : "";
 
-    // Only keep href on links; strip all other attributes from sanitized metadata HTML
+    // Metadata links should not carry publisher styles or event handlers into the app.
     [...el.attributes].forEach((attr) => el.removeAttribute(attr.name));
 
     if (el.tagName === "A") {
@@ -136,7 +136,7 @@ export function formatDescriptionHtml(rawDescription) {
   const normalized = body.innerHTML.trim();
   if (!normalized) return "<p><em>No description available.</em></p>";
 
-  // Ensure root-level text nodes and loose list items become block elements.
+  // Browser parsing can leave plain text and list items outside block containers.
   const wrapped = parser.parseFromString(`<div>${normalized}</div>`, "text/html");
   const root = wrapped.body.firstElementChild;
   if (!root) return "<p><em>No description available.</em></p>";

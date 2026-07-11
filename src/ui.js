@@ -1,10 +1,3 @@
-/**
- * ui.js — shared UI primitives: theme, toast, HTML escaping, colour palette.
- * No business logic lives here.
- */
-
-// ── Theme ─────────────────────────────────────────────────────────────────────
-
 const THEMES = ["dark", "sepia", "light", "bw"];
 export const TOAST_DURATION_MS = 2600;
 export const LIBRARY_SEARCH_DEBOUNCE_MS = 150;
@@ -23,8 +16,6 @@ export function savedTheme() {
   return localStorage.getItem("theme") || "dark";
 }
 
-// ── Toast ─────────────────────────────────────────────────────────────────────
-
 let _toastTimer;
 
 export function toast(msg) {
@@ -36,8 +27,6 @@ export function toast(msg) {
   _toastTimer = setTimeout(() => el.classList.remove("show"), TOAST_DURATION_MS);
 }
 
-// ── HTML helpers ──────────────────────────────────────────────────────────────
-
 /** Prevent XSS by escaping HTML metacharacters before innerHTML. */
 export function esc(s) {
   return String(s ?? "")
@@ -47,10 +36,6 @@ export function esc(s) {
     .replace(/"/g, "&quot;");
 }
 
-/**
- * Render empty-state UI for panels ("book" or "highlighter" icon).
- * @returns {string} HTML safe for innerHTML.
- */
 export function emptyState(icon, title, sub) {
   let iconSvg = "";
 
@@ -73,13 +58,9 @@ export function emptyState(icon, title, sub) {
   </div>`;
 }
 
-// ── Math helpers ────────────────────────────────────────────────────────────────
-
 export function clamp(val, min, max) {
   return Math.max(min, Math.min(max, val));
 }
-
-// ── Cover colour palette ──────────────────────────────────────────────────────
 
 const PALETTE = [
   { bg: "#132518", ac: "#4e9a6f" },
@@ -90,14 +71,12 @@ const PALETTE = [
   { bg: "#180a0a", ac: "#b55a5a" },
 ];
 
-/** Deterministic colour from a book title — same title always gives same colour. */
 export function coverColor(title) {
   let h = 0;
   for (let i = 0; i < title.length; i++) h = title.charCodeAt(i) + ((h << 5) - h);
   return PALETTE[Math.abs(h) % PALETTE.length];
 }
 
-/** SVG fallback cover art for books without an extracted image. */
 export function fallbackCover(title) {
   const c = coverColor(title);
   return `

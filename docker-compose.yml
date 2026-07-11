@@ -11,7 +11,7 @@ services:
       - cargo-git-cache:/home/developer/.cargo/git
       - target-cache:/workspace/src-tauri/target
       - npm-cache:/home/developer/.npm
-      # Required for UI rendering
+      # WebKit needs access to the host X11 socket inside the dev container.
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /run/user/${USER_ID:-1000}/bus:/run/user/${USER_ID:-1000}/bus
     working_dir: /workspace

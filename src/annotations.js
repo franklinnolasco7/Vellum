@@ -1,15 +1,9 @@
-/**
- * annotations.js — annotations panel: render, add, delete, detail view.
- */
 import * as api from "./api.js";
 import { esc, emptyState, toast } from "./ui.js";
-
-// ── State ─────────────────────────────────────────────────────────────────────
 
 /** @type {import('./api.js').Annotation[]} */
 let annotations = [];
 
-/** onJumpToChapter callback triggered when user clicks an annotation **/
 let onJumpToChapter = (_idx) => { };
 
 let _currentBookId = null;
@@ -60,8 +54,6 @@ function buildAnnotationHighlightQuery(quote) {
   return words.slice(start, end).join(" ");
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-
 export function init({ onJump }) {
   onJumpToChapter = onJump;
 
@@ -83,8 +75,6 @@ export function init({ onJump }) {
   initDetailPanel();
   initDragReorder();
 }
-
-// ── Load & render ─────────────────────────────────────────────────────────────
 
 export async function load(bookId) {
   _currentBookId = bookId;
@@ -255,12 +245,6 @@ function finalizeDragOrder(target = null) {
   });
 }
 
-// ── Add ───────────────────────────────────────────────────────────────────────
-
-/**
- * Save a new annotation from selected text.
- * @param {{ chapterIdx: number, quote: string, note?: string }} opts
- */
 export async function add({ chapterIdx, quote, note }) {
   if (!_currentBookId) return;
   try {
@@ -280,8 +264,6 @@ export async function add({ chapterIdx, quote, note }) {
   }
 }
 
-// ── Delete ────────────────────────────────────────────────────────────────────
-
 async function deleteAnnotation(id) {
   try {
     await api.deleteAnnotation(id);
@@ -291,8 +273,6 @@ async function deleteAnnotation(id) {
     toast(`Could not delete: ${err.message}`);
   }
 }
-
-// ── Panel toggle ──────────────────────────────────────────────────────────────
 
 let _open = true;
 
@@ -304,8 +284,6 @@ export function toggle() {
 export function open() {
   if (!_open) toggle();
 }
-
-// ── Detail Panel ──────────────────────────────────────────────────────────────
 
 function buildDetailPanelHTML() {
   return `
@@ -394,7 +372,7 @@ function openDetailPanel(annId) {
   _detailPanel.classList.add("open");
   _detailPanel.setAttribute("aria-hidden", "false");
 
-  // Prevent body scroll when panel is open
+  // Keep page scroll from fighting the slide-over panel on small screens.
   document.body.style.overflow = "hidden";
 }
 

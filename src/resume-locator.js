@@ -12,12 +12,12 @@ export function buildResumeLocator(readingArea, chapter, scrollPct) {
   const maxScrollTop = Math.max(0, readingArea.scrollHeight - readingArea.clientHeight);
   const currentScroll = readingArea.scrollTop;
 
-  // Hit-test element near top of viewport (20% down or 16px minimum) for stable resume point
+  // A point just below the top survives minor toolbar and font-size changes.
   const areaRect = readingArea.getBoundingClientRect();
   const targetY = areaRect.top + Math.max(16, areaRect.height * 0.2);
   let el = document.elementFromPoint(areaRect.left + areaRect.width / 2, targetY);
 
-  // Fall back to first visible element when hit-testing fails or document restructures
+  // Hit-testing can fail during layout churn, so keep a visible structural fallback.
   if (!el || !body.contains(el)) {
     const candidates = [...body.querySelectorAll("p,li,h1,h2,h3,h4,h5,h6,blockquote,div,span")];
     el = candidates.find((node) => {
@@ -56,7 +56,7 @@ export function applyResumeLocator(readingArea, locator, onScrollTopSet) {
   const maxScrollTop = Math.max(0, readingArea.scrollHeight - readingArea.clientHeight);
   const pxFallback = computePixelResumeTarget(locator, maxScrollTop);
 
-  // Prefer structural path matching before fuzzy text matching.
+  // Structural paths are cheaper and less prone to repeated-text false matches.
   let target = null;
   if (locator.path && locator.path.length > 0) {
     target = resolveElementPath(body, locator.path);
@@ -84,7 +84,7 @@ export function applyResumeLocator(readingArea, locator, onScrollTopSet) {
     const elementOffsetFromTop = target.getBoundingClientRect().top - bodyRect.top;
     const wanted = clamp(elementOffsetFromTop + (Number(locator.offsetPx) || 0), 0, maxScrollTop);
 
-    // Guard against large jumps when layout differs from the saved snapshot.
+    // Large disagreements mean the structural path probably points at different content.
     if (Math.abs(wanted - pxFallback) < LOCATOR_PIXEL_TOLERANCE || !Number.isFinite(pxFallback)) {
       readingArea.scrollTop = wanted;
       if (onScrollTopSet) onScrollTopSet(readingArea.scrollTop);
@@ -107,7 +107,7 @@ export function computePixelResumeTarget(locator, maxScrollTop) {
 
   const savedScrollable = Number(locator.scrollablePx);
   if (Number.isFinite(savedScrollable) && savedScrollable > 0) {
-    // Viewport height may differ: rescale saved position to current scroll range
+    // Resume positions should survive viewport and font-size changes.
     return clamp((rawTop / savedScrollable) * maxScrollTop, 0, maxScrollTop);
   }
 
@@ -201,6 +201,6 @@ export function writeResumeLocator(bookId, locator) {
 
     localStorage.setItem(RESUME_LOCATOR_STORAGE_KEY, JSON.stringify(all));
   } catch {
-    // Local storage can fail in constrained environments; continue silently.
+    // Progress is also persisted in SQLite, so local storage failure is non-fatal.
   }
 }

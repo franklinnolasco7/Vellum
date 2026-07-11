@@ -159,8 +159,7 @@ pub fn parse_toc(path: &Path) -> Result<Vec<TocEntry>> {
         }
     }
 
-    // Merge deduped TOC with full spine to ensure every chapter is navigable,
-    // even if TOC omits it (common in self-published EPUBs).
+    // Self-published EPUBs often omit spine entries from the TOC.
     let mut merged: BTreeMap<usize, TocEntry> = BTreeMap::new();
     for e in deduped {
         merged.entry(e.chapter_idx).or_insert(e);
@@ -168,12 +167,11 @@ pub fn parse_toc(path: &Path) -> Result<Vec<TocEntry>> {
 
     let unmapped: Vec<usize> = (0..total).filter(|i| !merged.contains_key(i)).collect();
 
-    // Batch-extract heading titles from all unmapped chapters using the already-open doc,
-    // instead of opening a new zip per chapter.
+    // Reuse the open EPUB handle instead of reopening the zip per fallback title.
     let mut html_titles: HashMap<usize, String> = HashMap::new();
     if !unmapped.is_empty() {
         for &idx in &unmapped {
-            // Try spine ID-based label first (no I/O).
+            // Spine IDs are cheap and often descriptive enough.
             if fallback_label_from_spine_id(idx, &spine_ids).is_some() {
                 continue;
             }
@@ -205,7 +203,7 @@ pub fn parse_toc(path: &Path) -> Result<Vec<TocEntry>> {
 
     let result: Vec<TocEntry> = merged.into_values().collect();
 
-    // Populate the in-process cache so subsequent calls (e.g. from get_chapter) are free.
+    // Chapter loads ask for TOC titles immediately after parsing.
     if let Ok(canonical) = fs::canonicalize(path) {
         if let Ok(mut cache) = TOC_CACHE.lock() {
             cache.insert(canonical, result.clone());
@@ -226,7 +224,6 @@ pub fn cached_toc(path: &Path) -> Result<Vec<TocEntry>> {
     parse_toc(path)
 }
 
-/// Remove a book's TOC from cache (e.g. after re-import).
 pub fn invalidate_toc_cache(path: &Path) {
     if let Ok(canonical) = fs::canonicalize(path) {
         if let Ok(mut cache) = TOC_CACHE.lock() {
@@ -235,7 +232,6 @@ pub fn invalidate_toc_cache(path: &Path) {
     }
 }
 
-/// Try to derive a label from the spine ID pattern (no I/O needed).
 fn fallback_label_from_spine_id(idx: usize, spine_ids: &[String]) -> Option<String> {
     let id = spine_ids.get(idx)?;
     let id_l = id.to_lowercase();
@@ -273,7 +269,6 @@ fn fallback_label_from_spine_id(idx: usize, spine_ids: &[String]) -> Option<Stri
     None
 }
 
-/// Extract the first heading (h1-h4) text from chapter HTML.
 fn extract_heading_from_html(html: &str) -> Option<String> {
     for tag in &["h1", "h2", "h3", "h4"] {
         if let Some(t) = extract_tag_text(html, tag) {
@@ -285,7 +280,7 @@ fn extract_heading_from_html(html: &str) -> Option<String> {
     None
 }
 
-/// Naïve tag-text extractor: returns inner text of first `<tag …>…</tag>`.
+/// Deliberately small fallback parser used only when EPUB metadata is missing.
 fn extract_tag_text(html: &str, tag: &str) -> Option<String> {
     let lower = html.to_lowercase();
     let open = format!("<{}", tag);
@@ -577,8 +572,7 @@ fn cache_dir_for_book(epub_path: &Path, cache_root: &Path) -> PathBuf {
 }
 
 fn source_fingerprint(epub_path: &Path) -> Result<String> {
-    // Path is included alongside size+mtime to prevent hash collisions when multiple books
-    // share the same cache root.
+    // The same cache root can contain different files with identical size and mtime.
     let meta = fs::metadata(epub_path)?;
     let modified = meta
         .modified()
@@ -627,7 +621,7 @@ fn extract_epub(epub_path: &Path, out_dir: &Path) -> Result<()> {
 }
 
 fn resolve_resource_path(chapter_path: &Path, src: &str) -> String {
-    // Strip query/anchor — zip entry keys don't include them.
+    // Zip entry keys do not include browser-only URL suffixes.
     let src = src.split(['?', '#']).next().unwrap_or(src);
     if src.trim().is_empty() {
         return String::new();
@@ -640,8 +634,7 @@ fn resolve_resource_path(chapter_path: &Path, src: &str) -> String {
     let mut base = chapter_path.to_path_buf();
     base.pop();
 
-    // Normalize path component-by-component: only ParentDir and Normal components are allowed.
-    // CurDir, RootDir, Prefix are ignored. This prevents `../../../etc/passwd` traversal attacks.
+    // Only relative zip paths are valid here; absolute roots and prefixes are ignored.
     for comp in Path::new(&decoded).components() {
         match comp {
             Component::ParentDir => {
@@ -670,7 +663,6 @@ fn detect_mime(data: &[u8]) -> &'static str {
         return "application/octet-stream";
     }
 
-    // Check magic bytes (binary headers). Covers 99% of common formats.
     if data.starts_with(b"\x89PNG") {
         return "image/png";
     } else if data.starts_with(b"\xff\xd8") {
@@ -683,14 +675,14 @@ fn detect_mime(data: &[u8]) -> &'static str {
         return "image/svg+xml";
     }
 
-    // Some SVG images omit XML declaration. Try UTF-8 decode + tag search as last resort.
+    // Some SVG images omit the XML declaration.
     if let Ok(s) = std::str::from_utf8(&data[..core::cmp::min(100, data.len())]) {
         if s.contains("<svg") {
             return "image/svg+xml";
         }
     }
 
-    // Default to JPEG for unknown binary formats (EPUB covers rarely use exotic types).
+    // EPUB covers rarely use exotic binary types; JPEG is the least surprising fallback.
     "image/jpeg"
 }
 
@@ -762,7 +754,8 @@ fn strip_chrome(html: &str) -> String {
         let start = html[bs..].find('>').map(|p| bs + p + 1).unwrap_or(bs);
         return html[start..be].to_owned();
     }
-    html.to_owned() // No <body> found (e.g. HTML fragments) — return as-is rather than producing empty output.
+    // EPUB chapters can be body-less HTML fragments.
+    html.to_owned()
 }
 
 fn safe_prefix(s: &str, max_bytes: usize) -> &str {
@@ -797,7 +790,7 @@ fn get_fallback_cover(
 ) -> Option<(Vec<u8>, String)> {
     let mut target_id = None;
 
-    // 1. "cover-image" property
+    // Cover metadata is inconsistent across EPUB versions and publishers.
     if target_id.is_none() {
         if let Some((id, _)) = doc.resources.iter().find(|(_, res)| {
             res.properties.as_ref().map_or(false, |p| {
@@ -808,7 +801,6 @@ fn get_fallback_cover(
         }
     }
 
-    // 2. EPUB3 files sometimes declare the cover via metadata rather than manifest properties.
     if target_id.is_none() {
         if let Some(item) = doc.mdata("cover") {
             if doc.resources.contains_key(&item.value) {
@@ -817,7 +809,6 @@ fn get_fallback_cover(
         }
     }
 
-    // 3. ID or path containing "cover"
     if target_id.is_none() {
         if let Some((id, _)) = doc.resources.iter().find(|(id, res)| {
             if !res.mime.starts_with("image/") {
@@ -831,7 +822,6 @@ fn get_fallback_cover(
         }
     }
 
-    // 4. First image in manifest
     if target_id.is_none() {
         let mut images: Vec<_> = doc
             .resources

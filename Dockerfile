@@ -31,8 +31,4 @@ ENV PATH="/home/developer/.cargo/bin:${PATH}"
 
 WORKDIR /workspace
 
-# Install frontend dependencies (optional, can skip if you prefer)
-# COPY package.json package-lock.json ./
-# RUN npm install
-
 CMD ["/bin/bash"]

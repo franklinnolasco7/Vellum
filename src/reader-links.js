@@ -26,7 +26,7 @@ async function handleChapterLinkClick(event) {
   const href = (link.getAttribute("href") || "").trim();
   if (!href) return;
 
-  // External URLs jump to browser; EPUB-internal links navigate within reader
+  // Only EPUB-internal links should navigate inside the reader.
   if (isExternalHref(href)) {
     event.preventDefault();
 

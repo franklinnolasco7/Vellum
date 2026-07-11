@@ -17,8 +17,7 @@ pub fn run() {
             let uri = request.uri().to_string();
             log::debug!("EPUB protocol request: {}", uri);
 
-            // Format: epub://[encoded_path_with_slashes]:resource/path
-            // We use ':' as a simple separator instead of special characters
+            // The separator must survive URL decoding because book paths can contain slashes.
             let without_scheme = uri.trim_start_matches("epub://");
 
             if let Some(sep_pos) = without_scheme.find(':') {

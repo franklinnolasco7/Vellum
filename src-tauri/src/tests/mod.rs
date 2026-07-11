@@ -1,6 +1,4 @@
-//! Test helpers shared across unit and integration tests.
-//!
-//! Import with `use crate::tests::*;` inside any `#[cfg(test)]` block.
+//! Shared test helpers keep database setup consistent across test modules.
 
 #[cfg(test)]
 pub mod helpers {
@@ -8,8 +6,7 @@ pub mod helpers {
     use r2d2::Pool;
     use r2d2_sqlite::SqliteConnectionManager;
 
-    /// Create a temporary in-memory connection pool and run migrations.
-    /// Every test gets a fresh, isolated database — no file cleanup needed.
+    /// In-memory pools keep tests isolated without filesystem cleanup.
     pub fn mem_pool() -> DbPool {
         let manager = SqliteConnectionManager::memory().with_init(|conn| {
             conn.execute_batch("

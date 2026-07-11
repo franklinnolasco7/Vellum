@@ -1,4 +1,4 @@
-// Explicit browser line breaks.
+// These tags create selection boundaries even when text nodes are adjacent.
 export const BLOCK_TAGS = new Set([
   "ADDRESS","ARTICLE","ASIDE","BLOCKQUOTE","DD","DETAILS","DIALOG","DIV",
   "DL","DT","FIELDSET","FIGCAPTION","FIGURE","FOOTER","FORM","H1","H2",
@@ -51,11 +51,11 @@ export function buildNormalizedTextMap(root, { stripPunct = false } = {}) {
   let prevTextNode = null;
 
   for (const textNode of textNodes) {
-    // Block boundaries should create spacing in normalized text to match browser selection behavior
+    // Browser selections include visual block gaps that text nodes do not expose.
     if (prevTextNode && crossesBlockBoundary(prevTextNode, textNode)) {
       if (!prevSpace && normalizedText.length > 0) {
         normalizedText += " ";
-        // Map synthetic space back to real DOM position via next node's first char
+        // Synthetic gaps need a DOM anchor so highlights can map back to real nodes.
         map.push({ node: textNode, offset: 0, synthetic: true });
         prevSpace = true;
       }
@@ -224,8 +224,7 @@ export function flashAnnotationHit(quote) {
   if (!normalizedQuote || normalizedQuote.length < 4) return false;
   if (normalizedText.length < normalizedQuote.length) return false;
 
-  // Fuzzy match: try full quote, then progressively shorten from word boundaries
-  // Only require 50% or 20 chars minimum so partial highlights don't fail
+  // Saved highlights should still flash after minor EPUB text or punctuation changes.
   const MIN_SEARCH_LEN = Math.max(20, Math.floor(normalizedQuote.length * 0.5));
   let matchIdx = -1;
   let matchedLen = 0;
@@ -239,7 +238,7 @@ export function flashAnnotationHit(quote) {
       break;
     }
 
-    // Shorten by trimming to previous word boundary.
+    // Word boundaries keep fallback matches readable instead of cutting through words.
     const lastSpace = searchQ.trimEnd().lastIndexOf(" ");
     if (lastSpace < MIN_SEARCH_LEN) break;
     searchQ = searchQ.slice(0, lastSpace).trimEnd();
@@ -250,15 +249,15 @@ export function flashAnnotationHit(quote) {
   const startInfo = map[matchIdx];
   if (!startInfo) return false;
 
-  // Use actual match length to avoid selecting beyond what was found
+  // Fallback matches may be shorter than the original saved quote.
   let endMapIdx = matchIdx + matchedLen - 1;
-  // Include trailing punctuation/symbols that normalization removed if they're in the original quote
+  // Preserve trailing punctuation that normalization ignored but the reader selected.
   const originalEnd = q.trimEnd();
   while (endMapIdx + 1 < map.length) {
     const nextEntry = map[endMapIdx + 1];
     const nextRawChar = nextEntry.node.nodeValue?.[nextEntry.offset] ?? "";
 
-    // Stop extending past word chars (prevents selecting unrelated text)
+    // Extending into a word is likely unrelated text, not stripped punctuation.
     if (/\w/.test(nextRawChar)) break;
     const quoteEndsWithIt = originalEnd.endsWith(
       (nextEntry.node.nodeValue || "").slice(
@@ -274,7 +273,7 @@ export function flashAnnotationHit(quote) {
   const endInfo = map[Math.min(endMapIdx, map.length - 1)];
   if (!endInfo) return false;
 
-  // Validate overlap (75%+) before highlighting to avoid false positives
+  // Fuzzy matching needs a guardrail against lighting up unrelated repeated prose.
   const matchedRaw = textNodes
     .slice(nodeIndex.get(startInfo.node), nodeIndex.get(endInfo.node) + 1)
     .map((n, i, arr) => {
@@ -313,7 +312,7 @@ export function flashSearchHit(query) {
   const q = query.trim();
   if (!q) return false;
 
-  // Strategy 1: exact phrase match across the full normalized text map
+  // Cross-node matching catches phrases split by inline markup.
   const { normalizedText, map, nodeIndex, textNodes } = buildNormalizedTextMap(body, { stripPunct: false });
   const normalizedQ = normalizeSearchString(q);
 
@@ -337,7 +336,7 @@ export function flashSearchHit(query) {
     }
   }
 
-  // Strategy 2: single text node match on the full query only, never tokens
+  // Avoid token matching because short search terms create noisy false positives.
   const needle = q.toLocaleLowerCase();
   const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {

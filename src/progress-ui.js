@@ -36,7 +36,7 @@ export function init(context) {
   progressBar.addEventListener("mousemove", onProgressHoverMove);
   progressBar.addEventListener("mouseleave", onProgressHoverLeave);
 
-  // Make chapter seek easier: wheel anywhere on the reader bottom controls.
+  // The progress bar is narrow, so wheel seeking works across the whole control strip.
   const readerBottomBar = document.querySelector(".reader-bottombar");
   readerBottomBar?.addEventListener("wheel", onProgressWheel, { passive: false });
 }
@@ -172,7 +172,7 @@ function onProgressWheel(event) {
   clearHoverFrame();
   hideTooltip();
 
-  // Clamp to one chapter step per debounce window.
+  // Keep trackpad momentum from skipping several chapters at once.
   if (Number.isFinite(_progressWheelTargetChapter)) {
     return;
   }
@@ -183,7 +183,7 @@ function onProgressWheel(event) {
   _progressWheelCarry += event.deltaY * deltaScale;
 
   const stepCount = Math.trunc(_progressWheelCarry / PROGRESS_WHEEL_STEP_THRESHOLD);
-  // Require minimum threshold to prevent tiny scroll amounts from flipping chapters
+  // Tiny wheel deltas are common on precision trackpads.
   if (stepCount === 0) return;
 
   _progressWheelCarry -= stepCount * PROGRESS_WHEEL_STEP_THRESHOLD;
@@ -247,7 +247,7 @@ function seekToProgressPct(pct) {
     return;
   }
 
-  // Scroll within chapter to avoid expensive chapter reload for same-chapter jumps.
+  // Same-chapter seeks can stay local and avoid reloading EPUB HTML.
   const readingArea = document.getElementById("reading-area");
   if (!readingArea) return;
 

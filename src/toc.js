@@ -27,7 +27,7 @@ export function renderToc() {
   const activePath = new Set();
   markActivePath(tree, activePath, currentChapterIdx);
 
-  // Keep the active chapter visible when users collapse sibling groups.
+  // Active chapters should stay reachable even after nearby groups are collapsed.
   expandToActivePath(tree, activePath);
 
   el.innerHTML = renderTocNodes(tree, 0, activePath, currentChapterIdx);
@@ -50,7 +50,7 @@ export function renderToc() {
       return;
     }
 
-    // Resolve chapter from nested clicks within grouped TOC rows.
+    // Grouped rows contain nested controls, so clicks may land below the row element.
     let chapter = null;
     let walkEl = target;
     while (walkEl && walkEl !== el) {

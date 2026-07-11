@@ -271,7 +271,6 @@
   gap: 8px;
 }
 
-/* Add note dialog */
 .add-note-dialog-backdrop {
   position: fixed;
   inset: 0;

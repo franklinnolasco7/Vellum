@@ -1,5 +1,3 @@
-/** Book info panel: slides in from right and displays rich book details. */
-
 import { esc, fallbackCover, toast } from "./ui.js";
 import * as coverCache from "./cover-cache.js";
 import * as format from "./format.js";
@@ -11,7 +9,6 @@ let backdrop = null;
 let panel = null;
 let onContinue = null;
 
-/** Build panel once at startup to avoid re-creating DOM for smooth slide animations on repeated open/close. */
 export function init() {
   if (panel) return;
 
@@ -133,7 +130,6 @@ export function init() {
   });
 }
 
-/** Populate and open panel. */
 export function show(book, toc = [], annotations = [], progress = {}, options = {}) {
   if (!panel) init();
   if (!panel) return;
@@ -164,7 +160,6 @@ export function show(book, toc = [], annotations = [], progress = {}, options = 
   panel.setAttribute("aria-hidden", "false");
 }
 
-/** Close panel. */
 export function close() {
   if (!panel || !backdrop) return;
   panel.classList.remove("open");
@@ -465,7 +460,7 @@ async function showEditDialog(book) {
       await api.updateBookMetadata(update);
       Object.assign(book, update);
       renderHero(book);
-      // Hack: we don't have toc and progress around, but we can just update the elements manually or close/re-open panel.
+      // The edit flow only changes metadata, so patch visible fields without rebuilding progress-dependent tabs.
       panel.querySelector("#bookinfo-title").textContent = book.title || "Untitled";
       const year = format.extractYear(book.published_at || book.added_at);
       const author = book.author || "Unknown author";

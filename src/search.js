@@ -1,6 +1,3 @@
-/**
- * search.js — in-book search overlay.
- */
 import * as api from "./api.js";
 import { esc } from "./ui.js";
 
@@ -11,8 +8,6 @@ let onNavigate = (_chapterIdx) => { };
 const SEARCH_DEBOUNCE_MS = 250;
 let _searchObserver = null;
 let _currentSearchId = 0;
-
-// ── Init ──────────────────────────────────────────────────────────────────────
 
 export function init({ onJump }) {
   onNavigate = onJump;
@@ -33,8 +28,6 @@ export function init({ onJump }) {
     }
   });
 }
-
-// ── Open / close ──────────────────────────────────────────────────────────────
 
 export function open(filePath, toc) {
   _filePath = filePath;
@@ -57,8 +50,6 @@ export function close() {
 export function isOpen() {
   return document.getElementById("search-overlay").classList.contains("open");
 }
-
-// ── Search ────────────────────────────────────────────────────────────────────
 
 async function runSearch(query) {
   const countEl = document.getElementById("search-count");

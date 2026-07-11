@@ -6,8 +6,6 @@ use rusqlite::params;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-// ── Public types ──────────────────────────────────────────────────────────────
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Book {
     pub id: String,
@@ -21,7 +19,7 @@ pub struct Book {
     pub file_size: Option<u64>,
     pub file_path: String,
     pub chapter_count: usize,
-    /// `data:image/jpeg;base64,…` or None
+    /// Data URI consumed directly by the webview.
     pub cover_b64: Option<String>,
     pub reading_seconds: u64,
     pub added_at: String,
@@ -49,8 +47,6 @@ pub struct Annotation {
     pub ann_order: i64,
     pub created_at: String,
 }
-
-// ── Books ─────────────────────────────────────────────────────────────────────
 
 pub fn add_book(
     pool: &DbPool,
@@ -102,7 +98,7 @@ pub fn add_book(
             now
         ],
     )?;
-    // Id may differ after ON CONFLICT UPDATE
+    // Re-import keeps the existing row id so annotations and progress survive.
     let actual_id: String = conn.query_row(
         "SELECT id FROM books WHERE file_path = ?1",
         params![file_path],
@@ -131,8 +127,6 @@ pub fn all_books(pool: &DbPool) -> Result<Vec<Book>> {
          LEFT JOIN progress p ON p.book_id = b.id
          ORDER BY b.last_opened DESC, b.added_at DESC",
     )?;
-    // For single-chapter books, progress is scroll_pct alone; for multi-chapter, interpolate across chapters
-
     let rows = stmt.query_map([], |r| {
         let raw: Option<Vec<u8>> = r.get(10)?;
         let cover_b64 = raw.map(|d: Vec<u8>| {
@@ -340,8 +334,6 @@ pub fn backfill_book_covers(pool: &DbPool) -> Result<()> {
     Ok(())
 }
 
-// ── TOC persistence ───────────────────────────────────────────────────────────
-
 /// Store parsed TOC as JSON so subsequent opens skip EPUB parsing entirely.
 pub fn save_book_toc(pool: &DbPool, book_id: &str, toc: &[epub::TocEntry]) -> Result<()> {
     let conn = pool.get().map_err(|e| Error::Db(e.to_string()))?;
@@ -353,7 +345,7 @@ pub fn save_book_toc(pool: &DbPool, book_id: &str, toc: &[epub::TocEntry]) -> Re
     Ok(())
 }
 
-/// Load cached TOC from DB. Returns None if not yet cached.
+/// Cached TOC is optional because older rows may predate `toc_json`.
 pub fn get_book_toc(pool: &DbPool, file_path: &str) -> Result<Option<Vec<epub::TocEntry>>> {
     let conn = pool.get().map_err(|e| Error::Db(e.to_string()))?;
     let mut stmt = conn.prepare(
@@ -414,8 +406,6 @@ pub fn touch_book(pool: &DbPool, id: &str) -> Result<()> {
     Ok(())
 }
 
-// ── Progress ──────────────────────────────────────────────────────────────────
-
 pub fn save_progress(
     pool: &DbPool,
     book_id: &str,
@@ -450,7 +440,7 @@ pub fn get_progress(pool: &DbPool, book_id: &str) -> Result<Option<Progress>> {
 }
 
 pub fn add_reading_time(pool: &DbPool, book_id: &str, seconds: u64) -> Result<()> {
-    // Skip no-op updates to avoid unnecessary DB round-trips
+    // Timer flushes can happen without elapsed reading time.
     if seconds == 0 {
         return Ok(());
     }
@@ -467,8 +457,6 @@ pub fn add_reading_time(pool: &DbPool, book_id: &str, seconds: u64) -> Result<()
     }
     Ok(())
 }
-
-// ── Annotations ───────────────────────────────────────────────────────────────
 
 pub fn add_annotation(
     pool: &DbPool,
@@ -575,8 +563,6 @@ pub fn delete_books(pool: &DbPool, ids: &[String]) -> Result<()> {
     tx.commit().map_err(|e| Error::Db(e.to_string()))?;
     Ok(())
 }
-
-// ── Minimal base-64 encoder ───────────────────────────────────────────────────
 
 fn b64_push(data: &[u8], out: &mut String) {
     const T: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

@@ -8,12 +8,9 @@ use url::Url;
 
 type CommandResult<T> = std::result::Result<T, String>;
 
-// Bridge internal error type to Tauri serializable format (String)
 fn into_command_result<T>(result: AppResult<T>) -> CommandResult<T> {
     result.map_err(|e| e.to_string())
 }
-
-// ── Import ────────────────────────────────────────────────────────────────────
 
 #[tauri::command]
 pub async fn import_epub(
@@ -31,7 +28,7 @@ pub async fn import_epub(
         .app_cache_dir()
         .map_err(|e| Error::Io(e.to_string()).to_string())?;
 
-    // Invalidate cached TOC so re-import picks up any structural changes.
+    // Re-imported files may have changed structure while keeping the same path.
     epub::invalidate_toc_cache(p);
 
     let path_clone = path.clone();
@@ -60,7 +57,7 @@ pub async fn import_epub(
     )
     .map_err(|e| e.to_string())?;
 
-    // Parse and cache TOC in DB at import time so opening the book is instant.
+    // TOC parsing is zip-heavy, so pay the cost during import instead of first open.
     if let Ok(toc) = epub::parse_toc(p) {
         library::save_book_toc(&pool, &id, &toc).ok();
     }
@@ -71,8 +68,6 @@ pub async fn import_epub(
         .find(|b| b.id == id)
         .ok_or_else(|| Error::NotFound("book after import".into()).to_string())
 }
-
-// ── Library ───────────────────────────────────────────────────────────────────
 
 #[tauri::command]
 pub async fn get_library(pool: State<'_, DbPool>) -> CommandResult<Vec<library::Book>> {
@@ -121,14 +116,12 @@ pub async fn update_book_metadata(
     ))
 }
 
-// ── Reading ───────────────────────────────────────────────────────────────────
-
 #[tauri::command]
 pub async fn get_toc(
     pool: State<'_, DbPool>,
     file_path: String,
 ) -> CommandResult<Vec<epub::TocEntry>> {
-    // Try DB cache first (instant), fall back to EPUB parsing.
+    // Older imports may not have cached TOC JSON yet.
     if let Ok(Some(toc)) = library::get_book_toc(&pool, &file_path) {
         return Ok(toc);
     }
@@ -181,8 +174,6 @@ pub async fn open_external_url(app: AppHandle, url: String) -> CommandResult<()>
         .map_err(|e| Error::Io(e.to_string()).to_string())
 }
 
-// ── Progress ──────────────────────────────────────────────────────────────────
-
 #[tauri::command]
 pub async fn save_progress(
     pool: State<'_, DbPool>,
@@ -210,8 +201,6 @@ pub async fn add_reading_time(
 ) -> CommandResult<()> {
     into_command_result(library::add_reading_time(&pool, &book_id, seconds))
 }
-
-// ── Annotations ───────────────────────────────────────────────────────────────
 
 #[derive(Deserialize)]
 pub struct NewAnnotation {
@@ -275,8 +264,6 @@ pub async fn update_annotation_order(
     into_command_result(library::update_annotation_order(&pool, &book_id, &mapped))
 }
 
-// ── Search ────────────────────────────────────────────────────────────────────
-
 #[tauri::command]
 pub async fn search_book(
     file_path: String,
@@ -287,8 +274,6 @@ pub async fn search_book(
     }
     into_command_result(epub::search(std::path::Path::new(&file_path), &query))
 }
-
-// ── Window controls — needs `use tauri::Manager` for get_webview_window ───────
 
 #[tauri::command]
 pub async fn window_minimize(app: AppHandle) -> CommandResult<()> {
@@ -303,7 +288,6 @@ pub async fn window_maximize(app: AppHandle) -> CommandResult<()> {
     let w = app
         .get_webview_window("main")
         .ok_or_else(|| Error::NotFound("main window".into()).to_string())?;
-    // Toggle maximize/unmaximize based on current state
     if w.is_maximized().unwrap_or(false) { w.unmaximize() } else { w.maximize() }
         .map_err(|e| Error::Io(e.to_string()).to_string())
 }

@@ -155,7 +155,7 @@ async function copyImageFromViewer() {
         return;
       }
     } catch {
-      // Fall back to web clipboard below.
+      // Web previews and tests may not have the Tauri clipboard plugin.
     }
 
     if (navigator.clipboard?.write && window.ClipboardItem) {

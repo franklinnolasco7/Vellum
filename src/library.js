@@ -1,4 +1,3 @@
-/** Manages library state, rendering, import, deletion, and sort behavior. */
 import * as api from "./api.js";
 import * as bookinfo from "./bookinfo.js";
 import * as coverCache from "./cover-cache.js";
@@ -41,7 +40,6 @@ const SORT_OPTIONS = [
   },
 ];
 
-/** Filter books by search query across title and author. */
 export function filterBooks(booksArray, query) {
   if (!query) return booksArray;
   const q = query.toLowerCase();
@@ -53,7 +51,6 @@ export function filterBooks(booksArray, query) {
 
 let sortIndex = 0;
 
-/** Initialize library interactions and handlers. */
 export function init({ onOpen }) {
   onOpenBook = onOpen;
   initSortDropdown();
@@ -92,7 +89,7 @@ export function init({ onOpen }) {
     libView.classList.remove("drag-over");
   }
 
-  // Expand target area for drag-drop to meet Fitts's law for faster interaction
+  // A full-view drop zone is faster than aiming at the grid itself.
   libView.addEventListener("dragover", (e) => {
     e.preventDefault();
     dragDepth = Math.max(1, dragDepth);
@@ -121,11 +118,11 @@ export function init({ onOpen }) {
     importPaths(paths);
   });
 
-  // Ensure hover state never remains after focus changes or aborted drags.
+  // Native drags can end outside the window without a matching dragleave.
   window.addEventListener("blur", resetDragState);
   document.addEventListener("dragend", resetDragState);
 
-  // Listen for native OS drag-drop events in desktop context to support native file manager drops
+  // Tauri exposes native file paths that browser drop events may hide.
   setupTauriDropListener(libView, resetDragState);
 
   document.addEventListener("vivant:library-changed", load);
@@ -191,7 +188,6 @@ async function openFilePicker(e) {
   }
 }
 
-/** Load books from the backend and render the current library view. */
 export async function load() {
   try {
     books = await api.getLibrary();
@@ -203,7 +199,6 @@ export async function load() {
   render();
 }
 
-/** Render the library grid and metadata using current state and sort mode. */
 export function render() {
   const grid = document.getElementById("book-grid");
   const meta = document.getElementById("library-meta");
@@ -236,7 +231,7 @@ export function render() {
     return;
   }
 
-  // --- DOM recycling: reuse existing cards instead of full innerHTML nuke ---
+  // Reusing cards avoids image reload flicker during search, sort, and selection changes.
   const visibleBooks = filteredBooks.slice(0, renderLimit);
   const desiredIds = new Set(visibleBooks.map(b => b.id));
 
@@ -250,7 +245,6 @@ export function render() {
     }
   }
 
-  // Clear stale non-card children (e.g. old empty-state)
   for (const child of [...grid.children]) {
     if (!child.classList?.contains("book-card") && !child.classList?.contains("scroll-sentinel")) child.remove();
   }
@@ -305,7 +299,6 @@ function applySort(booksArray) {
   booksArray.sort(option.compare);
 }
 
-/** Returns HTML string for a single book card. */
 function buildBookCardHtml(b) {
   const isSelected = selectedBookIds.has(b.id);
   const coverUrl = coverCache.getCoverUrl(b.id, b.cover_b64);
@@ -347,14 +340,12 @@ function buildBookCardHtml(b) {
     </div>`;
 }
 
-/** Parse card HTML into a DOM element. */
 function createBookCardElement(b) {
   const tpl = document.createElement("template");
   tpl.innerHTML = buildBookCardHtml(b).trim();
   return tpl.content.firstChild;
 }
 
-/** Patch an existing card in-place (selection state + progress). */
 function patchBookCard(card, b) {
   const isSelected = selectedBookIds.has(b.id);
   const wasSelected = card.classList.contains("selected");
@@ -373,7 +364,6 @@ function patchBookCard(card, b) {
   if (label) label.textContent = progressLabel(b);
 }
 
-/** Delegated click handler for the book grid (set once in init). */
 function handleGridClick(e) {
   const card = e.target.closest(".book-card");
   if (!card) return;
@@ -431,7 +421,6 @@ function handleGridClick(e) {
   onOpenBook(book);
 }
 
-/** Returns filtered and sorted books ready for rendering. */
 function getFilteredAndSortedBooks() {
   const filtered = filterBooks(books, searchQuery);
   applySort(filtered);
@@ -745,7 +734,6 @@ async function deleteBookItem(bookId) {
   }
 }
 
-/** Gather data and show the book info panel. */
 async function showBookInfo(book) {
   try {
     const [toc, annotations, progress] = await Promise.all([

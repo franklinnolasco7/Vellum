@@ -347,7 +347,6 @@
   color: #fff;
 }
 
-/* Theme-specific cover treatments */
 .theme-bw .book-cover,
 .theme-bw .bookinfo-cover {
   background: var(--b0);

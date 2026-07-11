@@ -1,5 +1,3 @@
-/** Bootstraps the app shell and routes between library and reader views. */
-
 import * as api      from "./api.js";
 import * as ui       from "./ui.js";
 import * as lib      from "./library.js";
@@ -7,8 +5,6 @@ import * as reader   from "./reader.js";
 import * as search   from "./search.js";
 import * as bookinfo from "./bookinfo.js";
 import * as settings from "./settings.js";
-
-// --- Build HTML shell ---
 
 document.getElementById("app").innerHTML = `
 <div id="titlebar">
@@ -47,7 +43,6 @@ document.getElementById("app").innerHTML = `
 
 <div id="content">
 
-  <!-- Search overlay (shown over both views when active) -->
   <div class="search-overlay" id="search-overlay">
     <div class="search-row">
       <span class="search-row-icon" aria-hidden="true">
@@ -68,7 +63,6 @@ document.getElementById("app").innerHTML = `
     <div class="search-results" id="search-results"></div>
   </div>
 
-  <!-- Selection tooltip -->
   <div class="selection-tooltip" id="sel-tooltip">
     <button class="sel-btn" id="sel-highlight">Highlight</button>
     <button class="sel-btn" id="sel-note">+ Note</button>
@@ -80,7 +74,6 @@ document.getElementById("app").innerHTML = `
     </button>
   </div>
 
-  <!-- ── Library view ── -->
   <div id="view-library">
     <div class="library-header">
       <div class="library-title-section">
@@ -152,7 +145,6 @@ document.getElementById("app").innerHTML = `
     <div class="book-grid" id="book-grid"></div>
   </div>
 
-  <!-- ── Reader view ── -->
   <div id="view-reader" style="display:none">
     <div class="toc-panel" id="toc-panel">
       <div class="toc-header">CONTENTS</div>
@@ -220,8 +212,6 @@ document.getElementById("app").innerHTML = `
 <div id="toast"></div>
 `;
 
-// --- Apply saved theme ---
-
 ui.applyTheme(ui.savedTheme());
 
 let currentView = "library";
@@ -246,8 +236,6 @@ function updateSearchVisibility() {
 function updateReaderActivity() {
   reader.setActive?.(currentView === "reader" && hasActiveBook);
 }
-
-// --- Initialize modules ---
 
 bookinfo.init();
 settings.init();
@@ -374,8 +362,6 @@ function switchView(view) {
 
   applyViewState();
 }
-
-// --- Bootstrap ---
 
 lib.load();
 updateReadingTabAvailability();

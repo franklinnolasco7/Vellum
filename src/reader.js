@@ -1,4 +1,3 @@
-/** Coordinates chapter rendering, progress persistence, TOC state, and selection actions. */
 import * as api from "./api.js";
 import * as ann from "./annotations.js";
 import * as search from "./search.js";
@@ -11,8 +10,6 @@ import * as timer from "./reading-timer.js";
 import * as selection from "./reader-selection.js";
 import * as links from "./reader-links.js";
 import * as progressUI from "./progress-ui.js";
-
-// --- State ---
 
 /** @type {import('./api.js').Book|null} */
 let book = null;
@@ -52,8 +49,6 @@ const NAV_SUSPEND_MS = 300;
 const REFINE_RETRY_DELAYS = [240, 350, 900];
 const ANCHOR_SCROLL_RETRY_DELAYS = [180, 520];
 
-// --- Initialize reader interactions ---
-
 export function init() {
   initToc({ onChapterSelect: (ch) => loadChapter(ch) });
   document.getElementById("btn-ann").addEventListener("click", ann.toggle);
@@ -90,7 +85,7 @@ export function init() {
         maybeAutoPage(readingArea, direction);
       }
 
-      // Skip writes during restore so we do not overwrite a valid saved position.
+      // Restores are authoritative until layout settles; saving mid-restore can erase them.
       if (autoPageSuspended) return;
 
       clearTimeout(_saveTimer);
@@ -103,7 +98,7 @@ export function init() {
     if (e.deltaY > 0) _lastWheelDownAt = now;
     if (e.deltaY < 0) _lastWheelUpAt = now;
 
-    // Defer chapter flips until content restore settles to prevent accidental navigation.
+    // Wheel momentum during restore should not turn chapters.
     if (now < _suspendAutoPageUntil) return;
     maybeAutoPageFromWheel(readingArea, e.deltaY);
   }, { passive: true });
@@ -153,8 +148,6 @@ export function setActive(isActive) {
   timer.setActive(_readerActive);
 }
 
-// --- Open and restore a book ---
-
 export async function openBook(b) {
   timer.setBook(null);
 
@@ -170,9 +163,6 @@ export async function openBook(b) {
     if (Number.isFinite(restoreLocator.scrollPct)) {
       restoreScrollPct = clamp(restoreLocator.scrollPct, 0, 1);
     }
-  } else {
-    // Fall back to book.progress_chapter for the initial render; the parallel
-    // getProgress fetch may update this before the user notices.
   }
 
   let chapterRenderPromise = loadChapter(chapterIdx, {
@@ -201,7 +191,7 @@ export async function openBook(b) {
 
   if (progResult.status === 'fulfilled' && progResult.value) {
     const prog = progResult.value;
-    // Only apply DB progress if we didn't have a valid resume locator.
+    // Structural locators survive reflow better than the DB's coarse scroll percent.
     if (!restoreLocator || !Number.isFinite(restoreLocator.chapterIdx)) {
       finalChapterIdx = prog.chapter_idx;
       finalRestoreScrollPct = clamp(prog.scroll_pct ?? 0, 0, 1);
@@ -214,8 +204,6 @@ export async function openBook(b) {
   setTocData(toc, chapterIdx);
   renderToc();
 
-  // If the chapter index changed because of the parallel progress fetch, we load again.
-  // This is rare since we use book.progress_chapter or resumeLocator initially.
   if (chapterIdx !== finalChapterIdx) {
     await loadChapter(chapterIdx, {
       scrollTarget: "restore",
@@ -228,8 +216,6 @@ export async function openBook(b) {
   if (_readerActive) timer.start();
 }
 
-
-// --- Chapter loading ---
 
 export async function loadChapter(idx, opts = {}) {
   if (!book) return;
@@ -253,7 +239,7 @@ export async function loadChapter(idx, opts = {}) {
     let ch = _chapterCache.get(cacheKey);
     if (!ch) {
       ch = await api.getChapter(book.file_path, idx);
-      // Map preserves insertion order, so .keys().next() is always the oldest.
+      // Map insertion order gives us a tiny LRU without extra bookkeeping.
       if (_chapterCache.size >= CHAPTER_CACHE_MAX) {
         const oldest = _chapterCache.keys().next().value;
         _chapterCache.delete(oldest);
@@ -397,19 +383,17 @@ async function convertLocalImageUrls() {
       try {
         const parsed = new URL(raw);
         let filePath = decodeURIComponent(parsed.pathname);
-        // Normalize Windows paths so convertFileSrc receives a valid local path.
+        // Tauri expects Windows drive paths without the URL-style leading slash.
         if (/^\/[A-Za-z]:\//.test(filePath)) filePath = filePath.slice(1);
         el.setAttribute(usedAttr, convertFileSrc(filePath));
       } catch {
-        // Leave original src to avoid hiding images when conversion fails.
+        // A broken conversion is worse than letting the original URL try to render.
       }
     });
   } catch {
-    // Best-effort conversion: keep rendering even if platform API is unavailable.
+    // Web previews and tests do not provide Tauri's asset conversion API.
   }
 }
-
-// --- Navigation ---
 
 async function prevChapter() {
   if (chapterIdx > 0) await loadChapter(chapterIdx - 1, { scrollTarget: "bottom" });
@@ -503,12 +487,6 @@ async function maybeAutoPageFromWheel(readingArea, deltaY) {
   }
 }
 
-/**
- * Guards against momentum-driven chapter flips by requiring two deliberate
- * edge-hits within EDGE_PAGE_INTENT_WINDOW_MS before allowing a chapter turn.
- * @param {number} direction  +1 or -1
- * @returns {boolean}
- */
 function consumeEdgePageIntent(direction) {
   const now = Date.now();
   const sameDirection = _edgePageIntentDir === direction;
@@ -522,7 +500,7 @@ function consumeEdgePageIntent(direction) {
     return false;
   }
 
-  // Ignore repeated edge checks from the same momentum burst.
+  // Momentum wheels can report several edge hits from one gesture.
   if (!hasGap) {
     return false;
   }
@@ -540,8 +518,6 @@ function resetEdgePageIntent() {
 }
 
 
-// --- Progress ---
-
 async function persistProgress() {
   if (!book) return;
 
@@ -553,21 +529,20 @@ async function persistProgress() {
   const maxScroll = Math.max(1, ra.scrollHeight - ra.clientHeight);
   const pct = maxScroll > 0 ? ra.scrollTop / maxScroll : 0;
 
-  // Structural locator survives chapter reflows; scroll % is the fast fallback
-  // when the locator can't find its target.
+  // Structural locators survive chapter reflows; scroll percent is only a fallback.
   const locator = buildResumeLocator(ra, chapter, pct);
   if (locator) {
     writeResumeLocator(bookId, locator);
   }
 
-  // Serialize saves to prevent stale writes from racing newer positions.
+  // Tauri command latency can reorder saves unless we serialize them.
   _progressSaveQueue = _progressSaveQueue
     .catch(() => { })
     .then(async () => {
       try {
         await api.saveProgress(bookId, chapter, clamp(pct, 0, 1));
       } catch {
-        // Ignore transient save errors; next scroll save will retry.
+        // Scroll and unload paths retry frequently enough for transient failures.
       }
     });
 }
