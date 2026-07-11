@@ -2,98 +2,69 @@
   <img src="src-tauri/icons/vivant.svg" width="120px" alt="Vivant logo" />
 </p>
 
-<h3 align="center">Read More. Live More. Vivant.</h3>
-<p align="center">A native Tauri e-reader for Linux.</p>
+<h1 align="center">Vivant</h1>
+<p align="center">Read more. Live more.</p>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPL%20v3-teal.svg?style=flat-square" alt="License" /></a>
   <a href="https://www.linux.org/pages/download/"><img src="https://img.shields.io/badge/Platform-Linux-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Platform" /></a>
-  <a href="https://github.com/franklinnolasco7/Vivant/releases"><img src="https://img.shields.io/badge/Status-Unreleased-lightgrey?style=flat-square" alt="Status" /></a>
-
+  <a href="https://github.com/franklinnolasco7/Vivant/releases"><img src="https://img.shields.io/badge/Status-Pre--release-lightgrey?style=flat-square" alt="Status" /></a>
 </p>
 
 ---
 
-## Requirements
+Vivant is a Linux EPUB reader built with Tauri. It stores your library data locally.
 
-| Tool      | Version          |
-| --------- | ---------------- |
-| Node.js   | 18+              |
-| npm       | 9+               |
-| Rust      | stable           |
-| WebKitGTK | 6.0 dev packages |
+## Install
 
-Install system dependencies for your distro:
+Vivant is not released yet. Packages will be posted on the [GitHub Releases](https://github.com/franklinnolasco7/Vivant/releases) page.
 
-```bash
-# Arch
-sudo pacman -S rustup nodejs npm webkitgtk-6.0 base-devel
+### Debian / Ubuntu
 
-# Fedora
-sudo dnf install rust cargo nodejs npm webkitgtk6.0-devel
-
-# Debian / Ubuntu
-sudo apt install rustup nodejs npm libwebkitgtk-6.0-dev
-
-rustup toolchain install stable
-rustup default stable
-```
-
----
-
-## Quick Start
-
-### Option 1: Local setup
+Download the `.deb` package from the latest release, then run:
 
 ```bash
-git clone https://github.com/franklinnolasco7/Vivant.git
-cd Vivant
-npm install
-npm run tauri dev
+sudo apt install ./Vivant-*.deb
 ```
 
-### Option 2: Docker (optional)
-
-Docker is optional and provided for contributors who prefer a consistent, containerized development environment.
+If your system reports missing dependencies, run:
 
 ```bash
-git clone https://github.com/franklinnolasco7/Vivant.git
-cd Vivant
-./scripts/docker-shell.sh
+sudo apt-get install -f
 ```
 
-For full Docker usage, see [DOCKER.md](DOCKER.md).
+### Fedora
 
----
+Download the `.rpm` package from the latest release, then run:
 
-## Contributing
-
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before PR. Project follows strict rules (GPL-3.0, parameterized SQL, no telemetry).
-
----
-
-## Scripts
-
-| Command               | Description                           |
-| --------------------- | ------------------------------------- |
-| `npm run dev`         | Start the frontend dev server         |
-| `npm run build`       | Build the frontend for production     |
-| `npm run test`        | Run the test suite                    |
-| `npm run tauri dev`   | Launch the full Tauri app in dev mode |
-| `npm run tauri build` | Build a production Tauri binary       |
-
----
-
-## Data
-
-Vivant stores your library database at:
-
+```bash
+sudo dnf install ./Vivant-*.rpm
 ```
+
+### Other Linux distributions
+
+There are no packages for every distro yet. For source builds, see [Development](DEVELOPMENT.md).
+
+## Privacy and data
+
+Vivant does not need an account and has no telemetry.
+
+Your library database lives here:
+
+```text
 ~/.local/share/dev.vivant.reader/vivant.db
 ```
 
----
+Back up this file if you want to keep your library state.
+
+## Links
+
+- [Development notes](DEVELOPMENT.md)
+- [Docker notes](DOCKER.md)
+- [Contributing guide](.github/CONTRIBUTING.md)
+- [Security policy](.github/SECURITY.md)
+- [Changelog](CHANGELOG.md)
 
 ## License
 
-Distributed under the GPL-3.0 License. See [LICENSE](LICENSE) for more information.
+GPL-3.0. See [LICENSE](LICENSE).
