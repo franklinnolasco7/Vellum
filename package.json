@@ -1,7 +1,7 @@
 {
   "name": "vivant",
   "description": "An open-source E-Book reader for Linux and Windows. Built with Tauri.",
-  "version": "1.1.0-beta.2",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "scripts": {
