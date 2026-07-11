@@ -48,7 +48,7 @@ function open() {
   render();
   requestAnimationFrame(() => backdrop.classList.add("open"));
   document.addEventListener("keydown", onKeyDown, true);
-  // Pre-fetch version so About tab renders immediately
+  // The About tab should not flash a placeholder when opened first.
   if (!_cachedVersion) {
     api.getAppVersion().then((v) => {
       _cachedVersion = v;
@@ -211,7 +211,7 @@ function renderAbout() {
       </div>
 
       <div class="settings-about-desc">
-        An open-source E-Book reader for Linux. Built with Tauri and vanilla JS.
+        An open-source E-Book reader for Linux. Built with Tauri.
       </div>
 
       <div class="settings-about-links">
@@ -230,7 +230,7 @@ function renderAbout() {
       </div>
 
       <div class="settings-about-footer">
-        Free software. No telemetry. No cloud.
+        Free software. No telemetry.
       </div>
     </div>
   `;
